@@ -1,4 +1,49 @@
-<index>
-    
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Parking Finder – Brașov</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
+    /* ascundem orice bară proprie, dacă ai una */
+    .topbar { display: none !important; }
+  </style>
+</head>
+<body>
+  <!-- topbar-ul tău anterior l-am scos; dacă rămâne în HTML, e ascuns prin CSS -->
+  <div id="map"></div>
 
-</index>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // setări oraș
+    const CITY_CENTER = [45.643, 25.588];
+    const CITY_ZOOM   = 12;
+
+    // harta fără controale și cu toate interacțiunile dezactivate
+    const map = L.map('map', {
+      center: CITY_CENTER,
+      zoom: CITY_ZOOM,
+      zoomControl: false,   // fără +/-
+      dragging: false,      // fără drag
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false,
+      keyboard: false,
+      touchZoom: false
+    });
+
+    // tile-uri OSM
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 20,
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    // IMPORTANT: nu adăugăm niciun marker/overlay aici (au fost eliminate)
+    // dacă aveai cod pentru marker sau poligon, comentează-l sau șterge-l.
+    // ex:
+    // // new L.Marker(CITY_CENTER).addTo(map)  <-- scoate
+  </script>
+</body>
+</html>
