@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Detalii Parcare — ParkingApp</title>
+  <link rel="stylesheet" href="stylepg2.css">
+</head>
+<body>
+  <header>
+    <h1>Detalii parcare</h1>
+    <p>Zona selectată: <strong id="selectedZoneLabel">—</strong></p>
+  </header>
+
+  <main>
+    <section id="parking-info">
+      <h2 id="parkingName">Nume Parcare</h2>
+      <p id="parkingDescription">
+        Aici poți adăuga descrierea parcării (număr locuri, program, facilități, etc.).
+      </p>
+
+      <div id="gallery">
+        <h3>Poze</h3>
+        <img src="https://via.placeholder.com/400x250?text=Parcare+1" alt="Foto parcare 1" width="400">
+        <img src="https://via.placeholder.com/400x250?text=Parcare+2" alt="Foto parcare 2" width="400">
+      </div>
+    </section>
+
+    <section id="booking">
+      <h2>Rezervă locul</h2>
+
+      <p>Tarif/oră: <strong id="rateLabel">—</strong> RON</p>
+
+      <div>
+        <label for="startTime">Început (opțional)</label>
+        <input id="startTime" type="datetime-local" name="startTime">
+      </div>
+
+      <fieldset>
+        <legend>Durată</legend>
+        <label for="hours">Ore</label>
+        <input id="hours" type="number" min="0" max="72" value="1">
+
+        <label for="minutes">Minute</label>
+        <input id="minutes" type="number" min="0" max="59" step="15" value="0">
+
+        <div>
+          <button type="button" id="quick15">+15 min</button>
+          <button type="button" id="quick30">+30 min</button>
+          <button type="button" id="quick60">+1 h</button>
+        </div>
+      </fieldset>
+
+      <section id="calculation">
+        <h3>Calcul</h3>
+        <p>Durată totală: <strong id="totalMinutesLabel">—</strong> minute (<span id="totalHoursLabel">—</span> ore)</p>
+        <p>Total de plată: <strong id="totalPriceLabel">—</strong> RON</p>
+      </section>
+
+      <div>
+        <button id="toPaymentBtn" type="button">Continuă la plată</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>ParkingApp — demo</p>
+  </footer>
+
+  <script>
+    // Tarife pe oră
+    const RATES = {
+      "1": 3.00,
+      "2": 2.00,
+      "3": 1.00
+    };
+
+    const MIN_MINUTES = 15;
+
+    // Elemente
+    const selectedZoneLabel = document.getElementById('selectedZoneLabel');
+    const rateLabel = document.getElementById('rateLabel');
+    const hoursInput = document.getElementById('hours');
+    const minutesInput = document.getElementById('minutes');
+    const totalMinutesLabel = document.getElementById('totalMinutesLabel');
+    const totalHoursLabel = document.getElementById('totalHoursLabel');
+    const totalPriceLabel = document.getElementById('totalPriceLabel');
+    const toPaymentBtn = document.getElementById('toPaymentBtn');
+
+    const quick15 = document.getElementById('quick15');
+    const quick30 = document.getElementById('quick30');
+    const quick60 = document.getElementById('quick60');
+
+    // Citire zona din URL
+    function getQueryParams() {
+      const params = {};
+      window.location.search.replace(/^\?/, '').split('&').forEach(p => {
+        const [k, v] = p.split('=').map(decodeURIComponent);
+        if (k) params[k] = v;
+      });
+      return params;
+    }
+
+    function formatCurrency(num) {
+      return Number(num).toFixed(2);
+    }
+
+    function computeTotalMinutes() {
+      const h = parseInt(hoursInput.value) || 0;
+      const m = parseInt(minutesInput.value) || 0;
+      let total = h * 60 + m;
+      if (total < MIN_MINUTES) total = MIN_MINUTES;
+      return total;
+    }
+
+    function updateCalculationUI() {
+      const zone = currentZone;
+      const rate = RATES[zone];
+      rateLabel.textContent = formatCurrency(rate);
+
+      const totalMinutes = computeTotalMinutes();
+      const totalHours = totalMinutes / 60;
+      const price = Math.round(rate * totalHours * 100) / 100;
+
+      totalMinutesLabel.textContent = totalMinutes;
+      totalHoursLabel.textContent = totalHours.toFixed(2);
+      totalPriceLabel.textContent = formatCurrency(price);
+    }
+
+    // Apăsare pe +15 min
+    quick15.addEventListener('click', () => {
+      let mins = parseInt(minutesInput.value) || 0;
+      let hrs = parseInt(hoursInput.value) || 0;
+
+      mins += 15;
+      if (mins >= 60) {
+        hrs += Math.floor(mins / 60);
+        mins = mins % 60;
+      }
+
+      hoursInput.value = hrs;
+      minutesInput.value = mins;
+      updateCalculationUI();
+    });
+
+    // Apăsare pe +30 min
+    quick30.addEventListener('click', () => {
+      let mins = parseInt(minutesInput.value) || 0;
+      let hrs = parseInt(hoursInput.value) || 0;
+
+      mins += 30;
+      if (mins >= 60) {
+        hrs += Math.floor(mins / 60);
+        mins = mins % 60;
+      }
+
+      hoursInput.value = hrs;
+      minutesInput.value = mins;
+      updateCalculationUI();
+    });
+
+    // Apăsare pe +1 oră
+    quick60.addEventListener('click', () => {
+      hoursInput.value = (parseInt(hoursInput.value) || 0) + 1;
+      updateCalculationUI();
+    });
+
+    [hoursInput, minutesInput].forEach(el => el.addEventListener('input', updateCalculationUI));
+
+    // Butonul „Continuă la plată”
+    toPaymentBtn.addEventListener('click', () => {
+      const zone = currentZone;
+      const totalMinutes = computeTotalMinutes();
+      const rate = RATES[zone];
+      const price = Math.round(rate * (totalMinutes / 60) * 100) / 100;
+      const startTime = document.getElementById('startTime').value || '';
+
+      const params = new URLSearchParams({
+        zone,
+        minutes: totalMinutes,
+        price: price.toFixed(2),
+        start: startTime
+      });
+
+      window.location.href = 'pag3.html?' + params.toString();
+    });
+
+    // Inițializare din URL
+    let currentZone = "1";
+    function init() {
+      const params = getQueryParams();
+      currentZone = params.zone || "1";
+      const zoneNames = {
+        "1": "Zona 1 — Centru",
+        "2": "Zona 2 — Perimetru",
+        "3": "Zona 3 — Periferie"
+      };
+      selectedZoneLabel.textContent = zoneNames[currentZone] || "Necunoscută";
+
+      if (params.name) {
+        document.getElementById('parkingName').textContent = decodeURIComponent(params.name);
+      }
+
+      updateCalculationUI();
+    }
+
+    init();
+  </script>
+</body>
+</html>
