@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Confirmare plată</title>
+  <link rel="stylesheet" href="css/pag3.css" />
+  <style>
+    .center { text-align:center; padding:40px 20px }
+    .big { font-size:64px; line-height:1; display:block; margin-bottom:10px }
+    .sep { height:1px; background:rgba(255,255,255,.12); margin:16px 0 22px }
+  </style>
+</head>
+<body>
+  <div class="wrap" style="max-width:800px">
+    <section class="card panel center">
+      <span class="big">✅</span>
+      <h2 style="margin:0 0 6px">Plată efectuată cu succes!</h2>
+      <p class="muted" id="methodLine">Metodă: —</p>
+      <div class="sep"></div>
+      <p><strong>Cod rezervare: <span id="codeOut">—</span></strong></p>
+      <p id="sumLine" class="muted"></p>
+      <div class="actions" style="justify-content:center; margin-top:18px">
+        <a href="index.html" class="btn primary">Înapoi la Hartă</a>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Citește parametrii veniți din pag3
+    const qs = new URLSearchParams(location.search);
+    const method = (qs.get('method') || 'CARD').toUpperCase();
+    const hours = qs.get('hours');
+    const rate  = qs.get('rate');
+    const total = qs.get('total') || (hours && rate ? Number(hours)*Number(rate) : null);
+    const fmtRON = n => new Intl.NumberFormat('ro-RO',{style:'currency',currency:'RON'}).format(Number(n||0));
+
+    document.getElementById('methodLine').textContent = 'Metodă: ' + method;
+    document.getElementById('codeOut').textContent = 'BRV-' + Date.now().toString(36).toUpperCase();
+    document.getElementById('sumLine').textContent =
+      (hours || rate || total)
+        ? `Ore: ${hours ?? '—'} • Tarif/oră: ${rate ? fmtRON(rate)+'/h' : '—'} • Total: ${total ? fmtRON(total) : '—'}`
+        : '';
+  </script>
+</body>
+</html>

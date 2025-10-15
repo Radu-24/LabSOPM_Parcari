@@ -1,63 +1,75 @@
-// —— Utilities
+document.addEventListener('DOMContentLoaded', () => {
+  const $  = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
 
+  // ===== Rezumat mic din querystring (opțional) =====
+  const qs = new URLSearchParams(location.search);
+  const hours = qs.get('hours');
+  const rate  = qs.get('rate');
+  const total = qs.get('total') || (hours && rate ? Number(hours) * Number(rate) : null);
+  const park  = qs.get('parkingId');
+  const mini  = $('#miniResume');
+  const fmtRON = (n) => new Intl.NumberFormat('ro-RO',{style:'currency',currency:'RON'}).format(Number(n||0));
 
-// —— Apple Pay (simulat)
-$('#formApple').addEventListener('submit', (e) => {
-e.preventDefault();
-// în realitate am apela ApplePaySession; aici doar simulăm succesul
-completePayment('Apple Pay', {});
-});
+  mini.innerHTML = `
+    <div><strong>Parcare:</strong> ${park ?? '—'}</div>
+    <div><strong>Ore:</strong> ${hours ?? '—'}</div>
+    <div><strong>Tarif/oră:</strong> ${rate ? fmtRON(rate)+'/h' : '—'}</div>
+    <div><strong>Total:</strong> ${total ? fmtRON(total) : '—'}</div>
+  `;
 
+  // ===== Tabs =====
+  const tabs  = $$('.tab');
+  const forms = $$('.payform');
+  const map   = { card:'#formCard', apple:'#formApple', sms:'#formSms' };
 
-// —— SMS submit
-$('#formSms').addEventListener('submit', (e) => {
-e.preventDefault();
-const phone = $('#phone').value.trim();
-if(!validPhoneRO(phone)) return alert('Te rugăm să introduci un număr valid (07xxxxxxxx sau +407xxxxxxxx).');
-// simulăm trimiterea codului și confirmarea automată
-completePayment('SMS', { phone: phone.replace(/\s+/g,'') });
-});
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      forms.forEach(f => f.classList.remove('show'));
+      const target = map[tab.dataset.tab];
+      if (target) document.querySelector(target).classList.add('show');
+    });
+  });
 
+  // ===== Redirect la pag4 pe orice submit =====
+  ['formCard','formApple','formSms'].forEach(id => {
+    const form = document.getElementById(id);
+    if (!form) return;
 
-// —— Finalizare generică
-function completePayment(method, meta={}){
-const code = `BRV-${sel.parkingId}-${Date.now().toString(36).toUpperCase()}`;
-const record = {
-code, method, parkingId: sel.parkingId, hours: sel.hours, rate: sel.rate, total: sel.total,
-createdAt: new Date().toISOString(), meta
-};
-const all = JSON.parse(localStorage.getItem('payments')||'[]');
-all.push(record); localStorage.setItem('payments', JSON.stringify(all));
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
 
+      // mică validare minimală pentru UX (nu blocăm redirectul cu condiții complicate)
+      if (id === 'formCard') {
+        if (!$('#ccName').value.trim()) { alert('Introdu numele de pe card.'); return; }
+        if (!/^\d{2}\/\d{2}$/.test($('#ccExpiry').value.trim())) { alert('Expirare LL/AA.'); return; }
+        if (!/^\d{3,4}$/.test($('#ccCvv').value.trim())) { alert('CVV invalid.'); return; }
+      }
+      if (id === 'formSms') {
+        if (!$('#phone').value.trim()) { alert('Introdu numărul de telefon.'); return; }
+      }
 
-// Consumă 1 loc dacă există disponibilitate simulată pe acest id
-try{
-const key = `availability_${sel.parkingId}`;
-const cur = JSON.parse(localStorage.getItem(key) || '{}');
-if(typeof cur.spots === 'number'){
-cur.spots = Math.max(0, cur.spots - 1);
-cur.updatedAt = Date.now();
-localStorage.setItem(key, JSON.stringify(cur));
-}
-}catch(err){ /* optional: ignore */ }
+      const method = id.replace('form','').toUpperCase(); // CARD / APPLE / SMS
 
+      // Păstrăm parametrii existenți din adresa curentă
+      const qsIn  = new URLSearchParams(location.search);
+      const qsOut = new URLSearchParams(qsIn.toString());
+      qsOut.set('method', method);
 
-// Afișează confirmarea
-$('#confCode').textContent = code;
-$('#confMethod').textContent = method + (meta.masked ? ` (${meta.masked})` : '');
-$('#confTotal').textContent = fmtRON(sel.total);
-$('#confirmBox').classList.add('show');
-window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-}
+      // Redirecționare în același folder
+      window.location.href = `pag4.html?${qsOut.toString()}`;
+    });
+  });
 
-
-// —— UX mic: formatare număr card & expirare
-$('#ccNumber').addEventListener('input', (e)=>{
-let v = e.target.value.replace(/\D/g,'').slice(0,19);
-e.target.value = v.replace(/(.{4})/g,'$1 ').trim();
-});
-$('#ccExpiry').addEventListener('input', (e)=>{
-let v = e.target.value.replace(/\D/g,'').slice(0,4);
-if(v.length>2) v = v.slice(0,2) + '/' + v.slice(2);
-e.target.value = v;
+  // UX: formatare LL/AA la expirare
+  const exp = document.getElementById('ccExpiry');
+  if (exp) {
+    exp.addEventListener('input', (e)=>{
+      let v = e.target.value.replace(/\D/g,'').slice(0,4);
+      if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+      e.target.value = v;
+    });
+  }
 });

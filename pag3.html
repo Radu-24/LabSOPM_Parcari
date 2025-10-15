@@ -1,80 +1,83 @@
 <!DOCTYPE html>
-</div>
-<div class="field">
-<label for="ccName">Nume pe card</label>
-<input id="ccName" placeholder="EX: POPESCU ION" required />
-</div>
-<div class="field">
-<label for="ccExpiry">Expirare</label>
-<input id="ccExpiry" placeholder="LL/AA" maxlength="5" required />
-<div class="help">ex: 09/28</div>
-</div>
-<div class="field">
-<label for="ccCvv">CVV</label>
-<input id="ccCvv" inputmode="numeric" maxlength="4" placeholder="123" required />
-</div>
-</div>
-<div class="actions">
-<button type="submit" class="btn primary">Plătește acum</button>
-</div>
-</form>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Parking Finder – Plată</title>
+  <link rel="stylesheet" href="css/pag3.css" />
+</head>
+<body>
+  <div class="wrap">
+    <!-- Panou stânga (informativ) -->
+    <section class="card panel left">
+      <h1>Finalizează plata</h1>
+      <p class="muted">Alege metoda dorită:</p>
+      <div class="resume" id="miniResume" aria-live="polite">
+        <!-- umplut din querystring dacă există -->
+      </div>
+    </section>
 
+    <!-- Panou dreapta (metode de plată) -->
+    <section class="card panel right">
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="card" role="tab" aria-selected="true">
+          <span class="i">💳</span> Card
+        </button>
+        <button class="tab" data-tab="apple" role="tab">
+          <span class="i"></span> Apple Pay
+        </button>
+        <button class="tab" data-tab="sms" role="tab">
+          <span class="i">📩</span> SMS
+        </button>
+      </div>
 
-<!-- APPLE PAY (simulare) -->
-<form id="formApple" class="payform" autocomplete="off">
-<div class="notice">
-<strong>Notă:</strong>&nbsp;Integrare simulată. Pe dispozitive Apple ar apărea foaia Apple Pay.
-</div>
-<div class="actions">
-<button type="submit" class="btn apple">Plătește cu Apple Pay</button>
-</div>
-</form>
+      <!-- CARD -->
+      <form id="formCard" class="payform show" autocomplete="off">
+        <div class="field">
+          <label for="ccName">Nume pe card</label>
+          <input id="ccName" placeholder="EX: POPESCU ION" required />
+        </div>
 
+        <div class="field">
+          <label for="ccExpiry">Expirare</label>
+          <input id="ccExpiry" placeholder="LL/AA" maxlength="5" required />
+          <div class="help">ex: 09/28</div>
+        </div>
 
-<!-- SMS -->
-<form id="formSms" class="payform" autocomplete="off">
-<div class="grid">
-<div class="field">
-<label for="phone">Număr telefon</label>
-<input id="phone" placeholder="07xx xxx xxx sau +407xx xxx xxx" required />
-<div class="help">Primești un cod prin SMS (simulat) pe care îl confirmi automat.</div>
-</div>
-</div>
-<div class="actions">
-<button type="submit" class="btn primary">Plătește prin SMS</button>
-</div>
-</form>
+        <div class="field">
+          <label for="ccCvv">CVV</label>
+          <input id="ccCvv" inputmode="numeric" maxlength="4" placeholder="123" required />
+        </div>
 
+        <div class="actions">
+          <button type="submit" class="btn primary">Plătește acum</button>
+        </div>
+      </form>
 
-<!-- CONFIRMARE -->
-<div id="confirmBox" class="confirm">
-<div class="notice success">
-<span class="ico">✅</span>
-<div>
-<strong>Plată finalizată!</strong>
-<div>Cod rezervare: <span class="code" id="confCode">—</span></div>
-<div>Metodă: <span id="confMethod">—</span></div>
-<div>Total: <span id="confTotal">—</span></div>
-<div style="margin-top:6px">Poți reveni la <a href="index.html">hartă</a> sau închide pagina.</div>
-</div>
-</div>
-</div>
-</section>
+      <!-- APPLE PAY (simulare) -->
+      <form id="formApple" class="payform" autocomplete="off">
+        <div class="notice">
+          <strong>Notă:</strong> Integrare simulată — pe dispozitive Apple ar apărea foaia Apple Pay.
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn apple">Plătește cu Apple Pay</button>
+        </div>
+      </form>
 
+      <!-- SMS -->
+      <form id="formSms" class="payform" autocomplete="off">
+        <div class="field">
+          <label for="phone">Număr telefon</label>
+          <input id="phone" placeholder="07xx xxx xxx" required />
+          <div class="help">Primești un cod prin SMS (simulat).</div>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn primary">Plătește prin SMS</button>
+        </div>
+      </form>
+    </section>
+  </div>
 
-<aside class="card panel side">
-<h3>Rezumat</h3>
-<div class="meta">
-<div class="item"><div class="lbl">Parcare</div><div class="val" id="metaPark">—</div></div>
-<div class="item"><div class="lbl">Ore</div><div class="val" id="metaHours">—</div></div>
-<div class="item"><div class="lbl">Tarif/oră</div><div class="val" id="metaRate">—</div></div>
-<div class="item"><div class="lbl">Total</div><div class="val" id="metaTotal">—</div></div>
-</div>
-<div class="notice small">Suma, parcarea și orele sunt primite din pagina anterioară (query string sau localStorage).</div>
-</aside>
-</div>
-
-
-<script src="js/pag3.js"></script>
+  <script src="js/pag3.js"></script>
 </body>
 </html>
