@@ -6,3 +6,4 @@ V.1.2.2 - Adaugare imagine background
 V.2.0.0 - Adaugare pagina 3
 V.3.0.0 - Adaugare pagina 4
 V.3.0.1 - Modificare zone
+V.3.0.2 - Modificare pag.4
