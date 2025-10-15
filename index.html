@@ -1,49 +1,300 @@
 <!doctype html>
-<html lang="ro">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Parking Finder – Brașov</title>
+
+  <!-- Leaflet core -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
   <style>
     html, body, #map { height: 100%; margin: 0; }
-    /* ascundem orice bară proprie, dacă ai una */
-    .topbar { display: none !important; }
+    #map { position: relative; z-index: 0; }
+
+    /* Top-right overlay (theme) — cannot be blocked */
+    .ui-top-right {
+      position: fixed;
+      top: 12px; right: 12px;
+      display: flex; flex-direction: column; gap: 10px;
+      z-index: 2147483647;
+      pointer-events: none;
+    }
+    .ui-top-right > * { pointer-events: auto; }
+
+    /* Bottom-right overlay (admin) — cannot be blocked */
+    .ui-bottom-right {
+      position: fixed;
+      right: 12px; bottom: 16px;
+      display: flex; flex-direction: column; gap: 10px;
+      z-index: 2147483647;
+      pointer-events: none;
+    }
+    .ui-bottom-right > * { pointer-events: auto; }
+
+    /* Theme toggle */
+    .fab {
+      padding: 12px 18px; border-radius: 999px; border: 0;
+      background: #111; color: #fff; font: 600 15px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      box-shadow: 0 6px 18px rgba(0,0,0,.3);
+      cursor: pointer; user-select: none; opacity: .95; transition: opacity .2s;
+    }
+    .fab:hover { opacity: 1; }
+    .fab.light { background:#fff; color:#111; }
+
+    /* Admin button (bottom-right) */
+    .admin-btn {
+      padding: 12px 18px; border-radius: 999px; border: 0;
+      background: #0d6efd; color: #fff; font: 700 15px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+      cursor: pointer; user-select: none; opacity: .98;
+    }
+
+    /* Keep attribution visible but never blocking */
+    .leaflet-control-attribution {
+      font-size: 10px !important; opacity: .65;
+      bottom: 4px !important; right: 4px !important; left: auto !important;
+      pointer-events: none !important;
+    }
+
+    /* Night tint on Carto tiles */
+    .night-soft-tiles {
+      filter: invert(85%) sepia(10%) saturate(115%) hue-rotate(190deg) brightness(88%) contrast(96%);
+    }
+
+    /* Zone outlines visibility */
+    .leaflet-overlay-pane .zone-outline { filter: drop-shadow(0 0 2px rgba(0,0,0,.35)); }
+
+    /* Minimal admin panel */
+    .admin-panel {
+      position: fixed; right: 12px; bottom: 68px; /* sits above the button */
+      width: min(420px, 92vw);
+      background: rgba(17,17,17,.96); color:#fff;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 12px; padding: 12px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.4);
+      z-index: 2147483000; display: none;
+      font: 13px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      max-height: 60vh; overflow: auto;
+    }
+    .admin-panel.light { background:#fff; color:#111; border-color: rgba(0,0,0,.15); }
+    .admin-panel .row { display:flex; align-items:center; gap:8px; flex-wrap: wrap; }
+    .admin-panel .row + .row { margin-top: 8px; }
+    .btn { padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:transparent; color:inherit; cursor:pointer; }
   </style>
 </head>
 <body>
-  <!-- topbar-ul tău anterior l-am scos; dacă rămâne în HTML, e ascuns prin CSS -->
   <div id="map"></div>
 
+  <!-- Top-right (theme) -->
+  <div class="ui-top-right">
+    <button id="themeBtn" class="fab">☀ Light</button>
+  </div>
+
+  <!-- Bottom-right (admin) -->
+  <div class="ui-bottom-right">
+    <button id="adminBtn" class="admin-btn">Admin</button>
+  </div>
+
+  <!-- Minimal admin panel -->
+  <div id="adminPanel" class="admin-panel" aria-hidden="true">
+    <div class="row" style="justify-content:space-between;">
+      <strong>Admin panel</strong>
+      <button id="closeAdmin" class="btn">Close</button>
+    </div>
+    <div class="row">
+      <div>Button works ✅ — panel opened by click.</div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <script>
-    // setări oraș
+    // ================== VIEW CONSTANTS ==================
     const CITY_CENTER = [45.643, 25.588];
-    const CITY_ZOOM   = 12;
+    const FIXED_ZOOM  = 12.5;
+    const CENTER_NUDGE = -0.005; // shift view a bit down
+    const DEFAULT_CENTER = [CITY_CENTER[0] + CENTER_NUDGE, CITY_CENTER[1]];
 
-    // harta fără controale și cu toate interacțiunile dezactivate
+    // ================== BASE LAYERS ==================
+    const osmLight = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20 });
+    const voyagerNightSoft = L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+      { maxZoom: 20, className: 'night-soft-tiles' }
+    );
+
+    // ================== MAP (LOCKED) ==================
     const map = L.map('map', {
-      center: CITY_CENTER,
-      zoom: CITY_ZOOM,
-      zoomControl: false,   // fără +/-
-      dragging: false,      // fără drag
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      boxZoom: false,
-      keyboard: false,
-      touchZoom: false
+      center: DEFAULT_CENTER,
+      zoom: FIXED_ZOOM,
+      zoomSnap: 0.5,
+      zoomControl: false,
+      dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+      boxZoom: false, keyboard: false, touchZoom: false
     });
+    map.setMinZoom(FIXED_ZOOM);
+    map.setMaxZoom(FIXED_ZOOM);
 
-    // tile-uri OSM
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 20,
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
+    // ================== THEME (FIXED TOGGLE) ==================
+    const themeBtn   = document.getElementById('themeBtn');
+    const adminPanel = document.getElementById('adminPanel');
 
-    // IMPORTANT: nu adăugăm niciun marker/overlay aici (au fost eliminate)
-    // dacă aveai cod pentru marker sau poligon, comentează-l sau șterge-l.
-    // ex:
-    // // new L.Marker(CITY_CENTER).addTo(map)  <-- scoate
+    let currentBase = null;
+
+    function applyTheme(mode) {
+      // remove old tiles
+      if (currentBase) { map.removeLayer(currentBase); currentBase = null; }
+      // apply new
+      if (mode === 'light') {
+        currentBase = osmLight;
+        themeBtn.textContent = '🌙 Night';
+        themeBtn.classList.add('light');
+        adminPanel.classList.add('light');
+      } else {
+        currentBase = voyagerNightSoft;
+        themeBtn.textContent = '☀ Light';
+        themeBtn.classList.remove('light');
+        adminPanel.classList.remove('light');
+      }
+      currentBase.addTo(map);
+      localStorage.setItem('pf_theme', mode);
+      // force reflow just in case
+      setTimeout(() => map.invalidateSize(), 0);
+    }
+
+    // boot with saved or default
+    const savedTheme = (localStorage.getItem('pf_theme') === 'light') ? 'light' : 'nightsoft';
+    applyTheme(savedTheme);
+
+    // robust toggle (click + keyboard)
+    function toggleTheme(e) {
+      if (e) { e.stopPropagation(); e.preventDefault(); }
+      const mode = (localStorage.getItem('pf_theme') === 'light') ? 'nightsoft' : 'light';
+      applyTheme(mode);
+    }
+    themeBtn.addEventListener('click', toggleTheme, { capture: true, passive: false });
+    themeBtn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') toggleTheme(e); });
+
+    // ================== ZONES (KEEP OUTLINES) ==================
+    let ZONES = [
+      { id: 1, title: "Zona 0 – Poiana Brașov", coords: [
+        [45.587238,25.547294],[45.587132,25.548417],[45.586792,25.549873],[45.586283,25.551209],
+        [45.586028,25.553029],[45.586325,25.554456],[45.586941,25.555518],[45.587514,25.556276],
+        [45.587706,25.557399],[45.588024,25.558309],[45.588831,25.558916],[45.589808,25.559098],
+        [45.590742,25.558886],[45.591825,25.559068],[45.592526,25.559796],[45.593184,25.561162],
+        [45.593906,25.562679],[45.594246,25.564197],[45.594607,25.565562],[45.594904,25.567231],
+        [45.595435,25.568293],[45.596242,25.568324],[45.596985,25.567808],[45.597304,25.566624],
+        [45.597834,25.564925],[45.598259,25.563741],[45.598854,25.562619],[45.599215,25.561617],
+        [45.599703,25.560676],[45.600382,25.559614],[45.601168,25.557763],[45.601486,25.556458],
+        [45.601699,25.554941],[45.60155,25.553545],[45.600998,25.552544],[45.600149,25.551451],
+        [45.599618,25.55045],[45.599045,25.549691],[45.59862,25.548599],[45.59828,25.547597],
+        [45.597856,25.546293],[45.59741,25.545655],[45.596518,25.545261],[45.595202,25.545534],
+        [45.594352,25.546414],[45.593121,25.547233],[45.592186,25.547082],[45.591294,25.546566],
+        [45.590445,25.546019],[45.589511,25.545473],[45.588576,25.545321],[45.587939,25.545625],
+        [45.587472,25.54611],[45.58726,25.546717]
+      ]},
+      { id: 2, title: "Zona 0 – Centrul Vechi", coords: [
+        [45.621652,25.563256],[45.622756,25.565562],[45.623987,25.56714],[45.625006,25.569628],
+        [45.625557,25.571935],[45.625812,25.576669],[45.626321,25.578914],[45.626916,25.581585],
+        [45.628104,25.583587],[45.629971,25.584801],[45.631754,25.586015],[45.633197,25.587411],
+        [45.634088,25.588868],[45.635743,25.590142],[45.637271,25.592145],[45.638671,25.594694],
+        [45.63969,25.59694],[45.640538,25.599185],[45.641588,25.601835],[45.643118,25.603638],
+        [45.644558,25.606298],[45.645728,25.606985],[45.647168,25.606256],[45.647798,25.605011],
+        [45.648698,25.60441],[45.650168,25.603681],[45.651951,25.60222],[45.652588,25.600217],
+        [45.652885,25.596818],[45.653224,25.593541],[45.653606,25.59087],[45.653309,25.587957],
+        [45.652376,25.585287],[45.650594,25.582616],[45.649024,25.580189],[45.64703,25.577943],
+        [45.646691,25.575455],[45.645587,25.572481],[45.644399,25.5689],[45.643593,25.565987],
+        [45.642066,25.563499],[45.640284,25.562224],[45.638756,25.562163],[45.636167,25.562952],
+        [45.633112,25.563741],[45.630693,25.563923],[45.62925,25.563499],[45.627977,25.562588],
+        [45.626873,25.561496],[45.62509,25.559675],[45.623435,25.559311],[45.622162,25.559918],
+        [45.621355,25.561071],[45.621185,25.562224]
+      ]},
+      { id: 3, title: "Zona 1", coords: [
+        [45.651612,25.556276],[45.650976,25.557672],[45.6514,25.560464],[45.650848,25.562952],
+        [45.65,25.565137],[45.648897,25.568718],[45.649024,25.571874],[45.649279,25.575455],
+        [45.649533,25.579278],[45.650594,25.582131],[45.651654,25.583405],[45.652715,25.585408],
+        [45.653564,25.587229],[45.653861,25.589535],[45.653988,25.591842],[45.653394,25.594937],
+        [45.653224,25.59785],[45.652927,25.60052],[45.652291,25.602645],[45.650848,25.603798],
+        [45.649491,25.604708],[45.648091,25.605436],[45.646691,25.607196],[45.645206,25.607682],
+        [45.644272,25.606772],[45.643551,25.605254],[45.64283,25.604314],[45.642002,25.603889],
+        [45.641175,25.604738],[45.640347,25.605952],[45.639286,25.60747],[45.638798,25.609928],
+        [45.638162,25.613751],[45.638077,25.618546],[45.639095,25.622127],[45.641344,25.626132],
+        [45.643466,25.630441],[45.646309,25.63469],[45.650467,25.635964],[45.653351,25.633719],
+        [45.655982,25.631837],[45.659672,25.629834],[45.66086,25.628317],[45.661072,25.624554],
+        [45.660902,25.620184],[45.661666,25.615572],[45.662132,25.609806],[45.662726,25.60574],
+        [45.663871,25.598882],[45.665822,25.59524],[45.666289,25.589778],[45.665314,25.585226],
+        [45.663956,25.579218],[45.662429,25.575333],[45.660478,25.57236],[45.658739,25.570175],
+        [45.657212,25.56805],[45.6556,25.564834],[45.654539,25.559736],[45.653691,25.55573],
+        [45.652885,25.55482],[45.651994,25.555184]
+      ]},
+      { id: 4, title: "Zona 2", coords: [
+        [45.653288,25.554457],[45.654068,25.551023],[45.655088,25.547419],[45.657188,25.545702],
+        [45.660487,25.545359],[45.663067,25.549049],[45.665106,25.550251],[45.667026,25.549479],
+        [45.670204,25.548363],[45.673083,25.550337],[45.675962,25.562096],[45.678721,25.567245],
+        [45.682558,25.572567],[45.685676,25.578918],[45.688315,25.586128],[45.689034,25.596085],
+        [45.688674,25.606728],[45.685197,25.618916],[45.681599,25.628185],[45.675722,25.63488],
+        [45.667925,25.637283],[45.662527,25.637627],[45.659048,25.641575],[45.656408,25.647068],
+        [45.651968,25.654793],[45.647288,25.655136],[45.642248,25.653763],[45.639608,25.646553],
+        [45.635167,25.647068],[45.630365,25.648613],[45.625203,25.652218],[45.622202,25.654449],
+        [45.614998,25.657196],[45.612356,25.657196],[45.610675,25.653934],[45.609955,25.644665],
+        [45.609955,25.636597],[45.611636,25.627842],[45.616079,25.621319],[45.619561,25.618057],
+        [45.623643,25.616169],[45.627484,25.616169],[45.630965,25.615997],[45.632406,25.612907],
+        [45.631566,25.608444],[45.628565,25.605183],[45.625083,25.601063],[45.622082,25.596771],
+        [45.621962,25.591793],[45.626404,25.591793],[45.629525,25.59351],[45.634206,25.600548],
+        [45.636367,25.603123],[45.638407,25.606041],[45.638827,25.606728],[45.639007,25.607715],
+        [45.638677,25.609603],[45.638257,25.611963],[45.637777,25.613637],[45.637807,25.616469],
+        [45.637897,25.618658],[45.638617,25.62149],[45.640028,25.624495],[45.641438,25.627027],
+        [45.642532,25.62947],[45.644018,25.632019],[45.645545,25.63475],[45.6472,25.636025],
+        [45.64983,25.63651],[45.651909,25.636086],[45.661242,25.629045],[45.661835,25.627407],
+        [45.661623,25.624554],[45.661581,25.621398],[45.661793,25.617575],[45.662132,25.613144],
+        [45.662684,25.608774],[45.663405,25.603798],[45.663999,25.600217],[45.664974,25.598093],
+        [45.666119,25.595969],[45.666501,25.593844],[45.666671,25.59087],[45.666671,25.588139],
+        [45.666119,25.585894],[45.665441,25.583587],[45.664423,25.578854],[45.662641,25.57418],
+        [45.661539,25.572724],[45.65963,25.570478],[45.658484,25.568536],[45.657127,25.566837],
+        [45.656406,25.564773],[45.655388,25.561739],[45.654539,25.55834],[45.6542,25.556094],
+        [45.653733,25.555245]
+      ]}
+    ];
+
+    const styleMap = {
+      "Zona 0 – Poiana Brașov": { color:'#1e90ff', weight:5, opacity:0.95, fill:false, className:'zone-outline' },
+      "Zona 0 – Centrul Vechi": { color:'#1e90ff', weight:5, opacity:0.95, fill:false, className:'zone-outline' },
+      "Zona 1": { color:'#21d4d4', weight:5, opacity:0.95, fill:false, className:'zone-outline' },
+      "Zona 2": { color:'#ff3b3b',  weight:6, opacity:0.95, fill:false, className:'zone-outline' }
+    };
+    function drawAllOutlines() {
+      (window._outlineLayers || []).forEach(l => map.removeLayer(l));
+      window._outlineLayers = [];
+      ZONES.forEach(z => {
+        const layer = L.polygon(z.coords, styleMap[z.title] || { color:'#ffd400', weight:4, fill:false });
+        layer.addTo(map);
+        window._outlineLayers.push(layer);
+      });
+    }
+    drawAllOutlines();
+
+    // ================== ADMIN BUTTON ==================
+    const adminBtn   = document.getElementById('adminBtn');
+    const adminPanelEl = document.getElementById('adminPanel');
+    const closeAdmin = document.getElementById('closeAdmin');
+
+    function openAdmin() {
+      adminPanelEl.style.display = 'block';
+      const mode = localStorage.getItem('pf_theme') === 'light' ? 'light' : 'nightsoft';
+      if (mode === 'light') adminPanelEl.classList.add('light'); else adminPanelEl.classList.remove('light');
+    }
+    function closeAdminPanel() { adminPanelEl.style.display = 'none'; }
+
+    const fireOpen = (e) => { e.preventDefault(); e.stopPropagation(); openAdmin(); };
+    ['click','pointerdown','mousedown','touchstart'].forEach(ev => {
+      adminBtn.addEventListener(ev, fireOpen, { capture: true, passive: false });
+    });
+    closeAdmin.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeAdminPanel(); });
+
+    // Prevent overlay clicks from bubbling to map
+    themeBtn.addEventListener('click', (e) => { e.stopPropagation(); }, { capture:true });
+    adminBtn.addEventListener('click', (e) => { e.stopPropagation(); }, { capture:true });
   </script>
 </body>
 </html>
