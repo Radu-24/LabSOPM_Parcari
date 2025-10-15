@@ -6,4 +6,5 @@ V.1.2.2 - Adaugare imagine background
 V.2.0.0 - Adaugare pagina 3
 V.3.0.0 - Adaugare pagina 4
 V.3.0.1 - Modificare zone
-V.3.0.2 - Modificare pag.4
+V.3.0.2 - Modificare pag.4 culori identice pagina 2
+V.3.0.3 - Modificare pag 3-4 Cvv(doar din 3 cifre) asezare in pagina
