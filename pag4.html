@@ -1,144 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ro">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Confirmare plată</title>
-  <link rel="stylesheet" href="css/pag3.css" />
-  <style>
-    /* --- Layout global: totul pe mijlocul ecranului --- */
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: radial-gradient(90vw 90vh at 80% -20%, #17244f 0%, #0b1021 45%, #070b18 100%);
-      color: #e9eefb;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Ubuntu;
-      display: grid;
-      place-items: center;
-    }
-
-    /* --- Card central --- */
-    .confirm-card {
-      width: min(560px, 94vw);
-      text-align: center;
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 18px;
-      box-shadow: 0 18px 40px rgba(3,10,30,.35);
-      padding: 40px 28px;
-    }
-
-    /* --- Icona verde --- */
-    .success-icon {
-      width: 96px;
-      height: 96px;
-      margin: 0 auto 18px;
-      border-radius: 16px;
-      display: grid;
-      place-items: center;
-      background: #1dd655;
-      box-shadow: 0 10px 24px rgba(0,0,0,.35), inset 0 0 0 4px rgba(0,0,0,.25);
-    }
-
-    .success-icon svg {
-      width: 56px;
-      height: 56px;
-      color: #fff;
-    }
-
-    /* --- Text & linii --- */
-    h2 {
-      margin: 12px 0 6px;
-      font-size: 24px;
-      font-weight: 800;
-    }
-
-    p {
-      margin: 6px 0;
-      font-size: 15px;
-    }
-
-    .muted {
-      opacity: 0.85;
-    }
-
-    .sep {
-      height: 1px;
-      background: rgba(255,255,255,.12);
-      margin: 18px 0 22px;
-    }
-
-    /* --- Butonul --- */
-    .actions {
-      display: flex;
-      justify-content: center;
-      margin-top: 24px;
-    }
-
-    .btn {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 18px;
-      font-weight: 900;
-      cursor: pointer;
-      text-decoration: none;
-    }
-
-    .btn.primary {
-      background: linear-gradient(180deg, #6aa8ff, #3c7af0);
-      color: #061024;
-      box-shadow: 0 10px 20px rgba(58,121,240,.35);
-    }
-
-    .btn.primary:hover {
-      filter: brightness(1.1);
-    }
-  </style>
+  <title>Confirmare plată — ParkingApp</title>
+  <link rel="stylesheet" href="css/pag3.css">
 </head>
-
-<body>
-  <section class="confirm-card">
+<body class="center">
+  <section class="card confirm-card">
     <div class="success-icon" aria-hidden="true">
-      <!-- ✅ Icona vectorială -->
       <svg viewBox="0 0 24 24" fill="none">
-        <path d="M20 7L10 17l-6-6"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"/>
+        <path d="M20 7L10 17l-6-6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-
-    <h2>Plată efectuată cu succes!</h2>
+    <h2 style="margin:0 0 6px">Plată efectuată cu succes!</h2>
     <p class="muted" id="methodLine">Metodă: —</p>
-
     <div class="sep"></div>
 
     <p><strong>Cod rezervare: <span id="codeOut">—</span></strong></p>
-    <p id="sumLine" class="muted"></p>
+    <div id="breakdown" class="muted" style="margin-top:6px"></div>
 
-    <div class="actions">
-      <a href="index.html" class="btn primary">Înapoi la Hartă</a>
+    <div class="actions" style="justify-content:center;margin-top:18px">
+      <a href="index.html" class="btn">Înapoi la Hartă</a>
     </div>
   </section>
 
   <script>
-    // --- Citește parametrii veniți din pag3 (metodă, ore, rate, total) ---
     const qs = new URLSearchParams(location.search);
     const method = (qs.get('method') || 'CARD').toUpperCase();
-    const hours = qs.get('hours');
-    const rate  = qs.get('rate');
-    const total = qs.get('total') || (hours && rate ? Number(hours)*Number(rate) : null);
+    const name   = qs.get('name') || '—';
+    const minutes= Number(qs.get('minutes') || 60);
+    const price  = Number(qs.get('price') || 0);
+    const hours  = (minutes/60);
+    const rate   = hours ? price/hours : 0;
 
     const fmtRON = n => new Intl.NumberFormat('ro-RO',{style:'currency',currency:'RON'}).format(Number(n||0));
 
-    // --- Afișează datele ---
     document.getElementById('methodLine').textContent = 'Metodă: ' + method;
     document.getElementById('codeOut').textContent = 'BRV-' + Date.now().toString(36).toUpperCase();
-    document.getElementById('sumLine').textContent =
-      (hours || rate || total)
-        ? `Ore: ${hours ?? '—'} • Tarif/oră: ${rate ? fmtRON(rate)+'/h' : '—'} • Total: ${total ? fmtRON(total) : '—'}`
-        : '';
+    document.getElementById('breakdown').innerHTML = `
+      <div><strong>Parcare:</strong> ${name}</div>
+      <div><strong>Durată:</strong> ${minutes} minute (${hours.toFixed(2)} h)</div>
+      <div><strong>Tarif/oră:</strong> ${rate ? fmtRON(rate)+'/h' : '—'}</div>
+      <div><strong>Total:</strong> ${fmtRON(price)}</div>
+    `;
   </script>
 </body>
 </html>
