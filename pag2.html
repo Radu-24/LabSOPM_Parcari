@@ -19,11 +19,44 @@
         Aici poți adăuga descrierea parcării (număr locuri, program, facilități, etc.).
       </p>
 
-      <div id="gallery">
-        <h3>Poze</h3>
-        <img src="https://via.placeholder.com/400x250?text=Parcare+1" alt="Foto parcare 1" width="400">
-        <img src="https://via.placeholder.com/400x250?text=Parcare+2" alt="Foto parcare 2" width="400">
+       <h2>Panoramă 360° & Servicii</h2>
+
+  <!-- 360° -->
+  <div id="panoramaContainer">
+    <h3>Vizualizare panoramică</h3>
+    <div id="panoramaViewer">
+      <img src="https://via.placeholder.com/800x400?text=Panoram%C4%83+360%C2%B0+Parcare" alt="Panoramă 360°" id="panoramaImage">
+    </div>
+    <p class="hint">💡 Ține click stânga și mișcă pentru a „roti” imaginea (simulare 360°)</p>
+  </div>
+
+  <!-- Programare viitoare -->
+  <div id="futureBooking">
+    <h3>Programează o parcare</h3>
+    <label for="futureDate">Alege data și ora:</label>
+    <input type="datetime-local" id="futureDate">
+    <button id="saveFutureBooking">Salvează programarea</button>
+    <div id="savedBookings"></div>
+  </div>
+
+  <!-- Abonamente -->
+  <div id="subscriptions">
+    <h3>Abonamente</h3>
+    <p>Alege tipul de abonament potrivit pentru tine:</p>
+    <div class="subscription-options">
+      <div class="subscription-card">
+        <h4>Săptămânal</h4>
+        <p>Preț: <strong>20 RON</strong></p>
+        <button class="subscribe-btn" data-type="saptamanal">Activează</button>
       </div>
+      <div class="subscription-card">
+        <h4>Lunar</h4>
+        <p>Preț: <strong>70 RON</strong></p>
+        <button class="subscribe-btn" data-type="lunar">Activează</button>
+      </div>
+    </div>
+    <div id="activeSubscription"></div>
+  </div>
     </section>
 
     <section id="booking">
@@ -31,11 +64,7 @@
 
       <p>Tarif/oră: <strong id="rateLabel">—</strong> RON</p>
 
-      <div>
-        <label for="startTime">Început (opțional)</label>
-        <input id="startTime" type="datetime-local" name="startTime">
-      </div>
-
+      
       <fieldset>
         <legend>Durată</legend>
         <label for="hours">Ore</label>
@@ -206,5 +235,7 @@
 
     init();
   </script>
+
+  
 </body>
 </html>
