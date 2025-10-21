@@ -287,3 +287,37 @@ footer {
   font-weight: 600;
 }
 
+/* === PANORAMĂ 360 === */
+#panorama {
+  margin-top: 1rem;
+}
+
+.panorama-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+
+#panoramaFrame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+#panorama h3 {
+  color: #fff;
+  margin-bottom: 0.6rem;
+}
+
+#panorama .hint {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #c6d4ff;
+  opacity: 0.8;
+}

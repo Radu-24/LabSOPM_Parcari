@@ -19,44 +19,20 @@
         Aici poți adăuga descrierea parcării (număr locuri, program, facilități, etc.).
       </p>
 
-       <h2>Panoramă 360° & Servicii</h2>
-
-  <!-- 360° -->
-  <div id="panoramaContainer">
-    <h3>Vizualizare panoramică</h3>
-    <div id="panoramaViewer">
-      <img src="https://via.placeholder.com/800x400?text=Panoram%C4%83+360%C2%B0+Parcare" alt="Panoramă 360°" id="panoramaImage">
-    </div>
-    <p class="hint">💡 Ține click stânga și mișcă pentru a „roti” imaginea (simulare 360°)</p>
+      <div id="panorama">
+  <h3>Panoramă 360°</h3>
+  <div class="panorama-container">
+    <!-- Exemplu Street View integrat (poți schimba locația) -->
+    <iframe
+      id="panoramaFrame"
+      src="https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE1xSmhGSWwxQ0dCQ2FzdkpXQ0ZBbF9ES3ZIM0oxMVd6ZFFzZk5C!2m2!1d45.644!2d25.588!3f0!4f0!5f0.7820865974627469"
+      allowfullscreen
+      loading="lazy"
+    ></iframe>
   </div>
+  <p class="hint">Poți roti și mări imaginea pentru a explora parcarea în 360°.</p>
+</div>
 
-  <!-- Programare viitoare -->
-  <div id="futureBooking">
-    <h3>Programează o parcare</h3>
-    <label for="futureDate">Alege data și ora:</label>
-    <input type="datetime-local" id="futureDate">
-    <button id="saveFutureBooking">Salvează programarea</button>
-    <div id="savedBookings"></div>
-  </div>
-
-  <!-- Abonamente -->
-  <div id="subscriptions">
-    <h3>Abonamente</h3>
-    <p>Alege tipul de abonament potrivit pentru tine:</p>
-    <div class="subscription-options">
-      <div class="subscription-card">
-        <h4>Săptămânal</h4>
-        <p>Preț: <strong>20 RON</strong></p>
-        <button class="subscribe-btn" data-type="saptamanal">Activează</button>
-      </div>
-      <div class="subscription-card">
-        <h4>Lunar</h4>
-        <p>Preț: <strong>70 RON</strong></p>
-        <button class="subscribe-btn" data-type="lunar">Activează</button>
-      </div>
-    </div>
-    <div id="activeSubscription"></div>
-  </div>
     </section>
 
     <section id="booking">
@@ -64,7 +40,11 @@
 
       <p>Tarif/oră: <strong id="rateLabel">—</strong> RON</p>
 
-      
+      <div>
+        <label for="startTime">Început (opțional)</label>
+        <input id="startTime" type="datetime-local" name="startTime">
+      </div>
+
       <fieldset>
         <legend>Durată</legend>
         <label for="hours">Ore</label>
@@ -220,9 +200,9 @@
       const params = getQueryParams();
       currentZone = params.zone || "1";
       const zoneNames = {
-        "1": "Zona 0 — Centru",
-        "2": "Zona 1 — Perimetru",
-        "3": "Zona 2 — Periferie"
+        "1": "Zona 1 — Centru",
+        "2": "Zona 2 — Perimetru",
+        "3": "Zona 3 — Periferie"
       };
       selectedZoneLabel.textContent = zoneNames[currentZone] || "Necunoscută";
 
@@ -235,7 +215,5 @@
 
     init();
   </script>
-
-  
 </body>
 </html>
