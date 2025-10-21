@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Confirmare plată — ParkingApp</title>
 
-  <!-- Folosește aceeași temă ca pag. 2 & 3 -->
+  <!-- Aceeași temă ca pag. 2 & 3 -->
   <link rel="stylesheet" href="css/pag3.css" />
 
   <style>
-    /* Păstrează cardul îngust și centrat */
+    /* Card îngust, centrat – ca înainte */
     html, body {
       height: 100%;
       margin: 0;
@@ -79,24 +79,21 @@
     <div id="breakdown" class="kv muted"></div>
 
     <div style="margin-top:18px">
-      <!-- IMPORTANT: trimite direct la pagina cu harta -->
       <a href="index.html" class="btn">Înapoi la Hartă</a>
     </div>
   </section>
 
   <script>
-    // Utilitare
     const qs = new URLSearchParams(location.search);
     const fmtRON = n => new Intl.NumberFormat('ro-RO',{style:'currency',currency:'RON'}).format(Number(n||0));
-    const formatDuration = (mins) => {
+
+    // === Durată corectă: "75 minute (1.25 h)" ===
+    function formatDurationCorrect(mins) {
       if (mins == null || isNaN(mins)) return '—';
       const m = Math.max(0, Math.round(mins));
-      const h = Math.floor(m / 60);
-      const r = m % 60;
-      if (h > 0 && r > 0) return `${m} minute (${h}.` + (r < 10 ? `0${r}` : r) + ` h)`;
-      if (h > 0 && r === 0) return `${m} minute (${h}.00 h)`;
-      return `${m} minute (0.` + (m < 10 ? `0${m}` : m) + ` h)`;
-    };
+      const hoursDecimal = (m / 60).toFixed(2);   // conversie corectă în ore zecimale
+      return `${m} minute (${hoursDecimal} h)`;
+    }
 
     // Citește parametrii trimiși din pag3
     const method  = (qs.get('method') || 'CARD').toUpperCase();
@@ -114,7 +111,7 @@
 
     document.getElementById('breakdown').innerHTML = `
       <div><strong>Parcare:</strong> ${name}</div>
-      <div><strong>Durată:</strong> ${formatDuration(minutes)}</div>
+      <div><strong>Durată:</strong> ${formatDurationCorrect(minutes)}</div>
       <div><strong>Tarif/oră:</strong> ${rate ? fmtRON(rate) + '/h' : '—'}</div>
       <div><strong>Total:</strong> ${fmtRON(total)}</div>
     `;
