@@ -12,11 +12,14 @@ V.3.0.0 - Adaugare pagina 4
 V.3.0.1 - Modificare zone
 V.3.0.2 - Modificare pag.4 culori identice pagina 2
 V.3.0.3 - Modificare pag 3-4 Cvv(doar din 3 cifre) asezare in pagina
+
 V.4.0.0 - Prima veriune de index + buton admin (nefunctional)
 V.4.1.0 - Zone functionale, pagina admin fuctionala?.
 V.4.2.0 - Adaugare vizualizare 360 a zonei selectate de parcare
+
 V.4.2.1 - Adaugare abonament parcare saptamanaul/lunar
 
 V.4.2.2 - Fuctionare buton " Inapoi la harta"
 V.4.2.3 - Stergere abonament parcare 
 
+V.4.3.0 - Selectare zone + generare id pentru autocompletare pag2
