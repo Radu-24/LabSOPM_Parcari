@@ -12,3 +12,4 @@ V.4.0.0 - Prima veriune de index + buton admin (nefunctional)
 V.4.1.0 - Zone functionale, pagina admin fuctionala?.
 V.4.2.0 - Adaugare vizualizare 360 a zonei selectate de parcare
 V.4.2.1 - Adaugare abonament parcare saptamanaul/lunar
+V.4.2.2 - Fuctionare buton " Inapoi la harta"
