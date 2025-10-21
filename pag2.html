@@ -196,24 +196,26 @@
 
     // Inițializare din URL
     let currentZone = "1";
-    function init() {
-      const params = getQueryParams();
-      currentZone = params.zone || "1";
-      const zoneNames = {
-        "1": "Zona 0 — Centru",
-        "2": "Zona 1 — Perimetru",
-        "3": "Zona 2 — Periferie"
-      };
-      selectedZoneLabel.textContent = zoneNames[currentZone] || "Necunoscută";
+   // === Citire zoneId și sincronizare cu sessionStorage ===
+(function syncZoneId() {
+  const params = new URLSearchParams(window.location.search);
+  const zoneIdFromURL = params.get("zoneId");
 
-      if (params.name) {
-        document.getElementById('parkingName').textContent = decodeURIComponent(params.name);
-      }
+  if (zoneIdFromURL) {
+    // Dacă avem zoneId în URL, îl salvăm și în sessionStorage
+    sessionStorage.setItem("pf_zoneId", zoneIdFromURL);
+  }
 
-      updateCalculationUI();
-    }
+  // Dacă nu avem în URL, folosim ce era în sessionStorage
+  const storedZoneId = sessionStorage.getItem("pf_zoneId");
+  if (storedZoneId && !zoneIdFromURL) {
+    // Adăugăm în URL fără să reîncărcăm pagina
+    const newUrl = new URL(window.location);
+    newUrl.searchParams.set("zoneId", storedZoneId);
+    window.history.replaceState({}, "", newUrl);
+  }
+})();
 
-    init();
   </script>
 </body>
 </html>
