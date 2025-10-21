@@ -1,70 +1,103 @@
-/* === RESET & TEMA (aceeași cu pagina 2) === */
-*{margin:0;padding:0;box-sizing:border-box;font-family:"SF Pro Display","Segoe UI",Roboto,sans-serif}
-html,body{height:100%;background:radial-gradient(circle at top left,#0c0f18 0%,#12141c 35%,#0a0c10 100%);color:#f5f7fa;overflow:hidden}
+/* === RESET + TEMA (identică cu pagina 2) === */
+* { margin:0; padding:0; box-sizing:border-box; font-family:"SF Pro Display","Segoe UI",Roboto,sans-serif; }
 
-/* container pag3: două carduri stivuite (rezumat + form plăți) */
+html, body {
+  height: 100%;
+  background: radial-gradient(circle at top left, #0c0f18 0%, #12141c 35%, #0a0c10 100%);
+  color: #f5f7fa;
+  overflow: hidden;                 /* fără scroll */
+}
+
+body {
+  display: grid;
+  place-items: center;              /* centrează pe ecran */
+  padding: 0;
+}
+
+/* === CONTAINER PAG3 === */
 .page{
-  width: min(460px, 92vw);      /* <-- îngust */
-  margin: 28px auto;            /* centrat orizontal */
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 0;                   /* fără padding lateral suplimentar */
+  width: min(520px, 92vw);          /* card îngust */
+  transform-origin: top center;     /* pentru auto-scale JS */
 }
-/* card generic (ca in pag.2) */
+
+/* === CARD generic (la fel ca pagina 2) === */
 .card{
-  background:rgba(40,45,55,.45);
-  backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:20px;padding:22px 24px;
-  box-shadow:0 6px 20px rgba(0,0,0,.4)
+  background: rgba(40, 45, 55, 0.45);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 18px 20px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+  transition: transform .3s ease, box-shadow .3s ease;
 }
-.card:hover{box-shadow:0 8px 25px rgba(0,0,0,.55)}
+.card:hover{ transform: translateY(-2px); box-shadow: 0 8px 26px rgba(0,0,0,.55); }
 
-/* titluri */
-h1{font-size:2.2rem;font-weight:700;margin-bottom:.25rem}
-.muted{color:#c6d4ff}
+h1{ font-size: 1.9rem; font-weight: 700; margin-bottom: 6px; }
+.muted{ color:#c6d4ff; }
 
-/* rezumat din stânga (acum primul card) */
-.summary dl{margin-top:.35rem}
-.summary dt{font-weight:700}
-.summary dd{margin:0 0 .25rem 0}
+/* === REZUMAT === */
+.summary dl{ margin-top: 8px; }
+.summary dt{ font-weight: 700; color:#fff; }
+.summary dd{ margin: 0 0 6px 0; color:#e9eefb; }
 
-/* taburi plăți */
-.tabs{display:flex;gap:.6rem;margin-bottom:1rem}
+/* === TABURI === */
+.tabs{ display:flex; gap:.6rem; margin: 12px 0 14px; }
 .tab{
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.15);
-  border-radius:12px;padding:.6rem 1rem;font-weight:600;color:#cfd8ff;cursor:pointer;transition:.25s
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: .6rem 1rem;
+  font-weight: 600;
+  color: #cfd8ff;
+  cursor: pointer;
+  transition: all .25s ease;
 }
-.tab.active{background:linear-gradient(135deg,rgba(50,160,255,.8),rgba(0,200,200,.6));color:#fff;border-color:rgba(0,180,255,.5);box-shadow:0 0 12px rgba(0,200,255,.3)}
-.payform{display:none}.payform.show{display:block}
+.tab.active{
+  background: linear-gradient(135deg, rgba(50,160,255,0.8), rgba(0,200,200,0.6));
+  color:#fff; border-color: rgba(0,180,255,0.5);
+  box-shadow: 0 0 12px rgba(0,200,255,0.35);
+}
 
-/* formular */
-.field{display:flex;flex-direction:column;margin-bottom:.9rem}
-label{font-weight:600;margin-bottom:.25rem;color:#cfd8ff}
+/* === FORM === */
+.payform{ display:none; }
+.payform.show{ display:block; }
+
+.field{ display:flex; flex-direction:column; margin-bottom:.8rem; }
+label{ font-weight:600; margin-bottom:.25rem; color:#cfd8ff; }
 input{
-  padding:.65rem .8rem;border-radius:10px;border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.08);color:#fff;transition:.3s
+  padding:.65rem .8rem; border-radius:10px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.08); color:#fff;
+  transition: all .3s ease;
 }
-input:focus{outline:none;background:rgba(255,255,255,.15);border-color:rgba(100,180,255,.4)}
-.help{font-size:.85rem;color:#9ecbff}
+input:focus{ outline:none; background: rgba(255,255,255,0.15); border-color: rgba(100,180,255,0.4); }
+.help{ font-size:.85rem; color:#9ecbff; }
 
-/* butoane */
-.actions{display:flex;gap:.6rem;justify-content:flex-start;margin-top:.5rem}
+/* === BUTOANE === */
+.actions{ display:flex; gap:.6rem; margin-top:.4rem; }
 .btn{
-  border:none;border-radius:12px;padding:.7rem 1.3rem;font-weight:700;color:#fff;
-  background:linear-gradient(135deg,rgba(0,140,255,.7),rgba(0,220,255,.5));
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;transition:.25s
+  border:none; border-radius:12px; padding:.7rem 1.3rem;
+  font-weight:700; color:#fff;
+  background: linear-gradient(135deg, rgba(0,140,255,0.7), rgba(0,220,255,0.5));
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  cursor:pointer; transition: all .25s ease; text-decoration:none;
 }
-.btn:hover{transform:translateY(-2px);box-shadow:0 6px 15px rgba(0,180,255,.4);
-  background:linear-gradient(135deg,rgba(0,160,255,.8),rgba(0,255,255,.6))}
-.btn.apple{background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(200,200,200,.8));color:#000}
+.btn:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,180,255,0.4);
+  background: linear-gradient(135deg, rgba(0,160,255,0.8), rgba(0,255,255,0.6));
+}
+.btn.apple{ background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(200,200,200,0.8)); color:#000; }
 
-/* pag4 */
-.center{min-height:100%;display:grid;place-items:center;padding:24px}
-.confirm-card{width:min(560px,94vw);text-align:center}
-.success-icon{width:96px;height:96px;margin:0 auto 18px;border-radius:16px;display:grid;place-items:center;
-  background:linear-gradient(135deg,rgba(0,200,100,.9),rgba(0,255,160,.7));box-shadow:0 10px 24px rgba(0,255,160,.25)}
-.success-icon svg{width:56px;height:56px;color:#fff}
-.sep{height:1px;background:rgba(255,255,255,.12);margin:18px 0 22px}
+/* === NOTE === */
+.notice{
+  font-size:.95rem; color:#9ecbff;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px; padding: .8rem 1rem; margin-bottom: .8rem;
+}
+
+/* === MICI ADAPTĂRI PENTRU ÎNCADRARE === */
+h1{ line-height:1.15; }
+.tabs{ margin-bottom: 10px; }
