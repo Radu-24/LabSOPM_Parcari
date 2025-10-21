@@ -4,45 +4,119 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Confirmare plată — ParkingApp</title>
-  <link rel="stylesheet" href="css/pag3.css">
+
+  <!-- Folosește aceeași temă ca pag. 2 & 3 -->
+  <link rel="stylesheet" href="css/pag3.css" />
+
+  <style>
+    /* Păstrează cardul îngust și centrat */
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: radial-gradient(circle at top left, #0c0f18 0%, #12141c 35%, #0a0c10 100%);
+      color: #f5f7fa;
+      font-family: "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 16px;
+    }
+    .confirm-card {
+      width: min(460px, 92vw);
+      text-align: center;
+      background: rgba(40, 45, 55, 0.45);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 28px 22px;
+      box-shadow: 0 6px 22px rgba(0,0,0,0.45);
+    }
+    .success-icon {
+      width: 86px; height: 86px; margin: 0 auto 14px;
+      border-radius: 16px; display: grid; place-items: center;
+      background: linear-gradient(135deg, rgba(0,200,100,.9), rgba(0,255,160,.7));
+      box-shadow: 0 10px 24px rgba(0,255,160,.25);
+    }
+    .success-icon svg { width: 52px; height: 52px; color: #fff; }
+    h2 { margin: 10px 0 4px; font-size: 1.6rem; font-weight: 800; }
+    .muted { color: #c6d4ff; }
+    .sep { height: 1px; background: rgba(255,255,255,.12); margin: 16px 0 18px; }
+
+    .btn {
+      border: none; border-radius: 12px; padding: .7rem 1.4rem;
+      font-weight: 700; color: #fff;
+      background: linear-gradient(135deg, rgba(0,140,255,.7), rgba(0,220,255,.5));
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      cursor: pointer; text-decoration: none; display: inline-block;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0,180,255,.4);
+      background: linear-gradient(135deg, rgba(0,160,255,.8), rgba(0,255,255,.6));
+    }
+    .kv { text-align:left; display:inline-block; margin-top: 6px; }
+    .kv div { margin: 4px 0; }
+    .kv strong { display:inline-block; width: 110px; }
+  </style>
 </head>
-<body class="center">
-  <section class="card confirm-card">
+
+<body>
+  <section class="confirm-card">
     <div class="success-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="none">
         <path d="M20 7L10 17l-6-6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <h2 style="margin:0 0 6px">Plată efectuată cu succes!</h2>
+
+    <h2>Plată efectuată cu succes!</h2>
     <p class="muted" id="methodLine">Metodă: —</p>
+
     <div class="sep"></div>
 
     <p><strong>Cod rezervare: <span id="codeOut">—</span></strong></p>
-    <div id="breakdown" class="muted" style="margin-top:6px"></div>
+    <div id="breakdown" class="kv muted"></div>
 
-    <div class="actions" style="justify-content:center;margin-top:18px">
+    <div style="margin-top:18px">
+      <!-- IMPORTANT: trimite direct la pagina cu harta -->
       <a href="index.html" class="btn">Înapoi la Hartă</a>
     </div>
   </section>
 
   <script>
+    // Utilitare
     const qs = new URLSearchParams(location.search);
-    const method = (qs.get('method') || 'CARD').toUpperCase();
-    const name   = qs.get('name') || '—';
-    const minutes= Number(qs.get('minutes') || 60);
-    const price  = Number(qs.get('price') || 0);
-    const hours  = (minutes/60);
-    const rate   = hours ? price/hours : 0;
-
     const fmtRON = n => new Intl.NumberFormat('ro-RO',{style:'currency',currency:'RON'}).format(Number(n||0));
+    const formatDuration = (mins) => {
+      if (mins == null || isNaN(mins)) return '—';
+      const m = Math.max(0, Math.round(mins));
+      const h = Math.floor(m / 60);
+      const r = m % 60;
+      if (h > 0 && r > 0) return `${m} minute (${h}.` + (r < 10 ? `0${r}` : r) + ` h)`;
+      if (h > 0 && r === 0) return `${m} minute (${h}.00 h)`;
+      return `${m} minute (0.` + (m < 10 ? `0${m}` : m) + ` h)`;
+    };
 
+    // Citește parametrii trimiși din pag3
+    const method  = (qs.get('method') || 'CARD').toUpperCase();
+    const name    = qs.get('zoneLabel') || qs.get('name') || '—';
+    const minutes = qs.get('minutes') ? Number(qs.get('minutes'))
+                  : (qs.get('hours') ? Math.round(Number(qs.get('hours'))*60) : 60);
+    const total   = qs.get('price') ? Number(qs.get('price'))
+                  : (qs.get('total') ? Number(qs.get('total')) : 0);
+    const rate    = (qs.get('rate') ? Number(qs.get('rate'))
+                  : (minutes>0 ? total / (minutes/60) : null));
+
+    // Populate UI
     document.getElementById('methodLine').textContent = 'Metodă: ' + method;
     document.getElementById('codeOut').textContent = 'BRV-' + Date.now().toString(36).toUpperCase();
+
     document.getElementById('breakdown').innerHTML = `
       <div><strong>Parcare:</strong> ${name}</div>
-      <div><strong>Durată:</strong> ${minutes} minute (${hours.toFixed(2)} h)</div>
-      <div><strong>Tarif/oră:</strong> ${rate ? fmtRON(rate)+'/h' : '—'}</div>
-      <div><strong>Total:</strong> ${fmtRON(price)}</div>
+      <div><strong>Durată:</strong> ${formatDuration(minutes)}</div>
+      <div><strong>Tarif/oră:</strong> ${rate ? fmtRON(rate) + '/h' : '—'}</div>
+      <div><strong>Total:</strong> ${fmtRON(total)}</div>
     `;
   </script>
 </body>
