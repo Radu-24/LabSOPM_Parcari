@@ -20,24 +20,19 @@
       </p>
 
       <div id="panorama">
-  <h3>Panoramă 360°</h3>
-  <div class="panorama-container">
-    <!-- Exemplu Street View integrat (poți schimba locația) -->
-    <iframe
-      id="panoramaFrame"
-      src="https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE1xSmhGSWwxQ0dCQ2FzdkpXQ0ZBbF9ES3ZIM0oxMVd6ZFFzZk5C!2m2!1d45.644!2d25.588!3f0!4f0!5f0.7820865974627469"
-      allowfullscreen
-      loading="lazy"
-    ></iframe>
-  </div>
-  <p class="hint">Poți roti și mări imaginea pentru a explora parcarea în 360°.</p>
-</div>
-
+        <h3>Panoramă 360°</h3>
+        <div class="panorama-container">
+          <!-- Panorama Google Street View (schimbată mai jos din script) -->
+          <iframe id="panoramaFrame"
+            src="https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE1xSmhGSWwxQ0dCQ2FzdkpXQ0ZBbF9ES3ZIM0oxMVd6ZFFzZk5C!2m2!1d45.644!2d25.588!3f0!4f0!5f0.7820865974627469"
+            allowfullscreen loading="lazy"></iframe>
+        </div>
+        <p class="hint">Poți roti și mări imaginea pentru a explora parcarea în 360°.</p>
+      </div>
     </section>
 
     <section id="booking">
       <h2>Rezervă locul</h2>
-
       <p>Tarif/oră: <strong id="rateLabel">—</strong> RON</p>
 
       <div>
@@ -77,16 +72,17 @@
   </footer>
 
   <script>
-    // Tarife pe oră
+    // === TARIFE ===
     const RATES = {
-      "1": 3.00,
-      "2": 2.00,
-      "3": 1.00
+      "1": 3.00, // Zona 0 — Poiana Brașov
+      "2": 3.00, // Zona 0 — Centrul Vechi
+      "3": 2.00, // Zona 1 — Perimetru
+      "4": 1.00  // Zona 2 — Periferie
     };
 
     const MIN_MINUTES = 15;
 
-    // Elemente
+    // === ELEMENTE HTML ===
     const selectedZoneLabel = document.getElementById('selectedZoneLabel');
     const rateLabel = document.getElementById('rateLabel');
     const hoursInput = document.getElementById('hours');
@@ -95,12 +91,12 @@
     const totalHoursLabel = document.getElementById('totalHoursLabel');
     const totalPriceLabel = document.getElementById('totalPriceLabel');
     const toPaymentBtn = document.getElementById('toPaymentBtn');
-
     const quick15 = document.getElementById('quick15');
     const quick30 = document.getElementById('quick30');
     const quick60 = document.getElementById('quick60');
+    const panoramaFrame = document.getElementById('panoramaFrame');
 
-    // Citire zona din URL
+    // === FUNCȚII ===
     function getQueryParams() {
       const params = {};
       window.location.search.replace(/^\?/, '').split('&').forEach(p => {
@@ -110,9 +106,7 @@
       return params;
     }
 
-    function formatCurrency(num) {
-      return Number(num).toFixed(2);
-    }
+    function formatCurrency(num) { return Number(num).toFixed(2); }
 
     function computeTotalMinutes() {
       const h = parseInt(hoursInput.value) || 0;
@@ -126,49 +120,31 @@
       const zone = currentZone;
       const rate = RATES[zone];
       rateLabel.textContent = formatCurrency(rate);
-
       const totalMinutes = computeTotalMinutes();
       const totalHours = totalMinutes / 60;
       const price = Math.round(rate * totalHours * 100) / 100;
-
       totalMinutesLabel.textContent = totalMinutes;
       totalHoursLabel.textContent = totalHours.toFixed(2);
       totalPriceLabel.textContent = formatCurrency(price);
     }
 
-    // Apăsare pe +15 min
+    // === BUTOANE SCURT ===
     quick15.addEventListener('click', () => {
       let mins = parseInt(minutesInput.value) || 0;
       let hrs = parseInt(hoursInput.value) || 0;
-
       mins += 15;
-      if (mins >= 60) {
-        hrs += Math.floor(mins / 60);
-        mins = mins % 60;
-      }
-
-      hoursInput.value = hrs;
-      minutesInput.value = mins;
-      updateCalculationUI();
+      if (mins >= 60) { hrs += Math.floor(mins / 60); mins = mins % 60; }
+      hoursInput.value = hrs; minutesInput.value = mins; updateCalculationUI();
     });
 
-    // Apăsare pe +30 min
     quick30.addEventListener('click', () => {
       let mins = parseInt(minutesInput.value) || 0;
       let hrs = parseInt(hoursInput.value) || 0;
-
       mins += 30;
-      if (mins >= 60) {
-        hrs += Math.floor(mins / 60);
-        mins = mins % 60;
-      }
-
-      hoursInput.value = hrs;
-      minutesInput.value = mins;
-      updateCalculationUI();
+      if (mins >= 60) { hrs += Math.floor(mins / 60); mins = mins % 60; }
+      hoursInput.value = hrs; minutesInput.value = mins; updateCalculationUI();
     });
 
-    // Apăsare pe +1 oră
     quick60.addEventListener('click', () => {
       hoursInput.value = (parseInt(hoursInput.value) || 0) + 1;
       updateCalculationUI();
@@ -176,35 +152,57 @@
 
     [hoursInput, minutesInput].forEach(el => el.addEventListener('input', updateCalculationUI));
 
-    // Butonul „Continuă la plată”
+    // === BUTON CONTINUĂ ===
     toPaymentBtn.addEventListener('click', () => {
       const zone = currentZone;
       const totalMinutes = computeTotalMinutes();
       const rate = RATES[zone];
       const price = Math.round(rate * (totalMinutes / 60) * 100) / 100;
       const startTime = document.getElementById('startTime').value || '';
-
-      const params = new URLSearchParams({
-        zone,
-        minutes: totalMinutes,
-        price: price.toFixed(2),
-        start: startTime
-      });
-
+      const params = new URLSearchParams({ zone, minutes: totalMinutes, price: price.toFixed(2), start: startTime });
       window.location.href = 'pag3.html?' + params.toString();
     });
 
-    // Inițializare din URL
+    // === SINCRONIZARE ID ZONĂ ===
     let currentZone = "1";
+
+    (function syncZoneId() {
+      const params = new URLSearchParams(window.location.search);
+      const zoneIdFromURL = params.get("zoneId");
+      if (zoneIdFromURL) {
+        try { sessionStorage.setItem("pf_zoneId", zoneIdFromURL); } catch (_) {}
+      }
+      const storedZoneId = sessionStorage.getItem("pf_zoneId");
+      if (!zoneIdFromURL && storedZoneId) {
+        try {
+          const newUrl = new URL(window.location);
+          newUrl.searchParams.set("zoneId", storedZoneId);
+          window.history.replaceState({}, "", newUrl);
+        } catch (_) {}
+      }
+    })();
+
+    // === INIȚIALIZARE ===
     function init() {
       const params = getQueryParams();
-      currentZone = params.zone || "1";
+      currentZone = params.zoneId || sessionStorage.getItem('pf_zoneId') || "1";
+
       const zoneNames = {
-        "1": "Zona 0 — Centru",
-        "2": "Zona 1 — Perimetru",
-        "3": "Zona 2 — Periferie"
+        "1": "Zona 0 — Poiana Brașov",
+        "2": "Zona 0 — Centrul Vechi",
+        "3": "Zona 1 — Perimetru",
+        "4": "Zona 2 — Periferie"
       };
+
+      const zonePanoramas = {
+        "1": "https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE1xSmhGSWwxQ0dCQ2FzdkpXQ0ZBbF9ES3ZIM0oxMVd6ZFFzZk5C!2m2!1d45.593!2d25.547!3f0!4f0!5f0.7820865974627469",
+        "2": "https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE5xN0pSYjVFa2pPZ2l0c3ZSRU1EbkZfRjNfQ1lybE9jbUlwM!2m2!1d45.642!2d25.588!3f0!4f0!5f0.7820865974627469",
+        "3": "https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE1jTVg5d2pTdVJ4R2lwc0dqYUpCN1ZKZUlRVjZud3djd1ZyV!2m2!1d45.658!2d25.599!3f0!4f0!5f0.7820865974627469",
+        "4": "https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE1aY1JvR2FjYzZ2NVh2QlJUSW9CM1ZzV1pjQ1pQYVZPekRr!2m2!1d45.680!2d25.630!3f0!4f0!5f0.7820865974627469"
+      };
+
       selectedZoneLabel.textContent = zoneNames[currentZone] || "Necunoscută";
+      panoramaFrame.src = zonePanoramas[currentZone] || zonePanoramas["1"];
 
       if (params.name) {
         document.getElementById('parkingName').textContent = decodeURIComponent(params.name);
