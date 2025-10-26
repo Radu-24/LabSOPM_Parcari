@@ -14,7 +14,7 @@
       <p class="muted">Alege metoda dorită:</p>
       <dl id="sumOut">
         <dt>Parcare:</dt>  <dd id="s_name">—</dd>
-        <dt>Ore:</dt>      <dd id="s_hours">—</dd>
+        <dt>Durată:</dt>   <dd id="s_hours">—</dd>
         <dt>Tarif/oră:</dt><dd id="s_rate">—</dd>
         <dt>Total:</dt>    <dd id="s_total">—</dd>
       </dl>
@@ -74,23 +74,43 @@
     const $ = s => document.querySelector(s);
     const fmtRON = n => new Intl.NumberFormat('ro-RO',{style:'currency',currency:'RON'}).format(Number(n||0));
 
-    // date venite din pagina 2: ?zone=&minutes=&price=&start=&name=
+    // Durată corectă: "75 minute (1.25 h)"
+    const formatDurationBlock = (mins) => {
+      if (mins == null || isNaN(mins)) return '—';
+      const m = Math.max(0, Math.round(mins));
+      const hoursDecimal = (m / 60).toFixed(2);
+      return `${m} minute (${hoursDecimal} h)`;
+    };
+
+    // date venite din pagina 2: ?zone=&minutes=&price=&start=&name=&zoneLabel=
     const qs = new URLSearchParams(location.search);
     const params = {
       zone: qs.get('zone') || '1',
-      minutes: Number(qs.get('minutes') || 60),
+      minutes: qs.get('minutes') != null ? Number(qs.get('minutes')) : 60,
       price: Number(qs.get('price') || 0),
       start: qs.get('start') || '',
-      name: qs.get('name') ? decodeURIComponent(qs.get('name')) : '—'
+      name: qs.get('name') ? decodeURIComponent(qs.get('name')) : null,
+      zoneLabel: qs.get('zoneLabel') || null
+    };
+
+    // fallback pentru numele zonei dacă nu primim zoneLabel
+    const ZONE_NAMES = {
+      "1": "Zona 0 — Poiana Brașov",
+      "2": "Zona 0 — Centrul Vechi",
+      "3": "Zona 1 — Perimetru",
+      "4": "Zona 2 — Periferie"
     };
 
     // tarif/oră derivat dacă avem price și minutes
     const hours = Math.max(0.25, params.minutes/60); // minim 15 min = 0.25 h
     const rate = params.price && hours ? (params.price / hours) : null;
 
+    // textul pentru "Parcare"
+    const parkText = params.zoneLabel || params.name || ZONE_NAMES[params.zone] || '—';
+
     // populare rezumat
-    $('#s_name').textContent   = params.name;
-    $('#s_hours').textContent  = hours.toFixed(2) + ' h';
+    $('#s_name').textContent   = parkText;
+    $('#s_hours').textContent  = formatDurationBlock(params.minutes);
     $('#s_rate').textContent   = rate ? fmtRON(rate) + '/h' : '—';
     $('#s_total').textContent  = fmtRON(params.price);
 
@@ -105,13 +125,25 @@
       const sel = map[t.dataset.tab]; if(sel) document.querySelector(sel).classList.add('show');
     }));
 
-    // UX mic pentru expirare
+    // UX: formatăm LL/AA la expirare
     const exp = document.getElementById('ccExpiry');
-    exp && exp.addEventListener('input', e=>{
-      let v = e.target.value.replace(/\D/g,'').slice(0,4);
-      if(v.length>2) v = v.slice(0,2)+'/'+v.slice(2);
-      e.target.value = v;
-    });
+    if (exp) {
+      exp.addEventListener('input', (e)=>{
+        let v = e.target.value.replace(/\D/g,'').slice(0,4);
+        if(v.length>2) v = v.slice(0,2)+'/'+v.slice(2);
+        e.target.value = v;
+      });
+    }
+
+    // UX: CVV exact 3 cifre
+    const cvv = document.getElementById('ccCvv');
+    if (cvv) {
+      cvv.setAttribute('maxlength','3');
+      cvv.setAttribute('inputmode','numeric');
+      cvv.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\D/g,'').slice(0,3);
+      });
+    }
 
     // ==== REDIRECT LA PAG4 PENTRU ORICE METODĂ ====
     ['formCard','formApple','formSms'].forEach(id=>{
@@ -123,7 +155,7 @@
         if(id==='formCard'){
           if(!document.getElementById('ccName').value.trim()) return alert('Introdu numele de pe card.');
           if(!/^\d{2}\/\d{2}$/.test(document.getElementById('ccExpiry').value.trim())) return alert('Expirare LL/AA.');
-          if(!/^\d{3,4}$/.test(document.getElementById('ccCvv').value.trim())) return alert('CVV invalid.');
+          if(!/^\d{3}$/.test(document.getElementById('ccCvv').value.trim())) return alert('CVV trebuie să aibă exact 3 cifre.');
         }
         if(id==='formSms'){
           if(!document.getElementById('phone').value.trim()) return alert('Introdu numărul de telefon.');
@@ -136,7 +168,8 @@
           minutes: params.minutes,
           price: params.price.toFixed(2),
           start: params.start,
-          name: params.name
+          // păstrăm textul pentru pag4
+          zoneLabel: parkText
         });
         window.location.href = `pag4.html?${out.toString()}`;
       });
