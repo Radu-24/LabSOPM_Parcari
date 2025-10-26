@@ -29,20 +29,30 @@
       </div>
 
       <!-- Card -->
-      <form id="formCard" class="payform show" autocomplete="off">
+      <form id="formCard" class="payform show" autocomplete="off" novalidate>
         <div class="field">
           <label for="ccName">Nume pe card</label>
-          <input id="ccName" placeholder="EX: POPESCU ION" required />
+          <input
+            id="ccName"
+            placeholder="EX: POPESCU ION"
+            autocomplete="cc-name"
+            inputmode="text"
+            spellcheck="false"
+            required
+          />
         </div>
+
         <div class="field">
           <label for="ccExpiry">Expirare</label>
           <input id="ccExpiry" placeholder="LL/AA" maxlength="5" required />
           <div class="help">ex: 09/28</div>
         </div>
+
         <div class="field">
           <label for="ccCvv">CVV</label>
-          <input id="ccCvv" inputmode="numeric" maxlength="3" placeholder="123" required />
+          <input id="ccCvv" type="password" inputmode="numeric" maxlength="3" placeholder="123" required />
         </div>
+
         <div class="actions">
           <button type="submit" class="btn">Plătește acum</button>
         </div>
@@ -56,10 +66,17 @@
       </form>
 
       <!-- SMS -->
-      <form id="formSms" class="payform" autocomplete="off">
+      <form id="formSms" class="payform" autocomplete="off" novalidate>
         <div class="field">
           <label for="phone">Număr telefon</label>
-          <input id="phone" placeholder="07xx xxx xxx" required />
+          <input
+            id="phone"
+            placeholder="07xxxxxxxx"
+            inputmode="numeric"
+            pattern="\d*"
+            maxlength="15"
+            required
+          />
           <div class="help">Primești un cod prin SMS (simulat).</div>
         </div>
         <div class="actions">
@@ -71,26 +88,28 @@
 
   <script>
     // ==== HELPERI ====
-    const $ = s => document.querySelector(s);
-    const fmtRON = n => new Intl.NumberFormat('ro-RO',{style:'currency',currency:'RON'}).format(Number(n||0));
+    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => document.querySelectorAll(s);
+    const fmtRON = (n) => new Intl.NumberFormat('ro-RO',{style:'currency',currency:'RON'}).format(Number(n||0));
 
     // Durată corectă: "75 minute (1.25 h)"
-    const formatDurationBlock = (mins) => {
+    function formatDurationBlock(mins){
       if (mins == null || isNaN(mins)) return '—';
       const m = Math.max(0, Math.round(mins));
       const hoursDecimal = (m / 60).toFixed(2);
       return `${m} minute (${hoursDecimal} h)`;
-    };
+    }
 
-    // date venite din pagina 2: ?zone=&minutes=&price=&start=&name=&zoneLabel=
+    // ==== PARAMETRI DIN URL (din pag.2) ====
+    // așteptăm ideal: ?zone=&minutes=&price=&start=&zoneLabel=&name=
     const qs = new URLSearchParams(location.search);
     const params = {
       zone: qs.get('zone') || '1',
       minutes: qs.get('minutes') != null ? Number(qs.get('minutes')) : 60,
       price: Number(qs.get('price') || 0),
       start: qs.get('start') || '',
-      name: qs.get('name') ? decodeURIComponent(qs.get('name')) : null,
-      zoneLabel: qs.get('zoneLabel') || null
+      zoneLabel: qs.get('zoneLabel') || null,
+      name: qs.get('name') ? decodeURIComponent(qs.get('name')) : null
     };
 
     // fallback pentru numele zonei dacă nu primim zoneLabel
@@ -108,34 +127,48 @@
     // textul pentru "Parcare"
     const parkText = params.zoneLabel || params.name || ZONE_NAMES[params.zone] || '—';
 
-    // populare rezumat
+    // ==== POPULARE REZUMAT ====
     $('#s_name').textContent   = parkText;
     $('#s_hours').textContent  = formatDurationBlock(params.minutes);
     $('#s_rate').textContent   = rate ? fmtRON(rate) + '/h' : '—';
     $('#s_total').textContent  = fmtRON(params.price);
 
     // ==== TABURI ====
-    const tabs = document.querySelectorAll('.tab');
-    const forms = document.querySelectorAll('.payform');
-    const map = { card:'#formCard', apple:'#formApple', sms:'#formSms' };
+    const tabMap = { card:'#formCard', apple:'#formApple', sms:'#formSms' };
+    $$('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        $$('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        $$('.payform').forEach(f => f.classList.remove('show'));
+        const target = tabMap[tab.dataset.tab];
+        if (target) document.querySelector(target).classList.add('show');
+      });
+    });
 
-    tabs.forEach(t => t.addEventListener('click', ()=>{
-      tabs.forEach(x=>x.classList.remove('active')); t.classList.add('active');
-      forms.forEach(f=>f.classList.remove('show'));
-      const sel = map[t.dataset.tab]; if(sel) document.querySelector(sel).classList.add('show');
-    }));
+    // ==== INPUT MASKS ====
+    // Nume pe card: doar litere (și diacritice), spații, '-' și '’'
+    const nameInput = document.getElementById('ccName');
+    if (nameInput) {
+      nameInput.addEventListener('input', (e) => {
+        e.target.value = e.target.value
+          .normalize('NFC')
+          .replace(/[^A-Za-zĂÂÎȘŞȚŢăâîșşțţ \-’']/g, '')  // litere RO + spații + - + ’
+          .replace(/\s{2,}/g, ' ')                        // compactează spațiile multiple
+          .replace(/^\s+/, '');                           // taie spațiul inițial
+      });
+    }
 
-    // UX: formatăm LL/AA la expirare
+    // Expirare LL/AA – auto-formatare
     const exp = document.getElementById('ccExpiry');
     if (exp) {
       exp.addEventListener('input', (e)=>{
         let v = e.target.value.replace(/\D/g,'').slice(0,4);
-        if(v.length>2) v = v.slice(0,2)+'/'+v.slice(2);
+        if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
         e.target.value = v;
       });
     }
 
-    // UX: CVV exact 3 cifre
+    // CVV – doar 3 cifre
     const cvv = document.getElementById('ccCvv');
     if (cvv) {
       cvv.setAttribute('maxlength','3');
@@ -145,32 +178,65 @@
       });
     }
 
-    // ==== REDIRECT LA PAG4 PENTRU ORICE METODĂ ====
-    ['formCard','formApple','formSms'].forEach(id=>{
+    // Telefon – doar cifre (și la tastare, și la paste), + validare minim 10 cifre
+    const phone = document.getElementById('phone');
+    if (phone) {
+      const keepDigits = (val) => val.replace(/\D/g,'');
+      ['input','paste','change','blur'].forEach(evt => {
+        phone.addEventListener(evt, (e) => {
+          const clean = keepDigits(e.target.value);
+          if (e.target.value !== clean) e.target.value = clean;
+        });
+      });
+    }
+
+    // ==== SUBMIT & REDIRECT LA PAG4 ====
+    ['formCard','formApple','formSms'].forEach(id => {
       const form = document.getElementById(id);
-      if(!form) return;
-      form.addEventListener('submit', e=>{
+      if (!form) return;
+
+      form.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        if(id==='formCard'){
-          if(!document.getElementById('ccName').value.trim()) return alert('Introdu numele de pe card.');
-          if(!/^\d{2}\/\d{2}$/.test(document.getElementById('ccExpiry').value.trim())) return alert('Expirare LL/AA.');
-          if(!/^\d{3}$/.test(document.getElementById('ccCvv').value.trim())) return alert('CVV trebuie să aibă exact 3 cifre.');
+        // Validări specifice
+        if (id === 'formCard') {
+          const nameVal = nameInput.value.trim();
+          const allowedChars = /^[A-Za-zĂÂÎȘŞȚŢăâîșşțţ '\-’]+$/;   // DOAR caractere permise
+          const hasTwoWords  = nameVal.split(/\s+/).length >= 2;   // minim două cuvinte
+
+          if (!allowedChars.test(nameVal) || !hasTwoWords) {
+            alert('Numele trebuie să conțină doar litere (cu diacritice), spații, - sau ’ și cel puțin două cuvinte.');
+            return;
+          }
+          if (!/^\d{2}\/\d{2}$/.test($('#ccExpiry').value.trim())) { alert('Expirare LL/AA.'); return; }
+          if (!/^\d{3}$/.test($('#ccCvv').value.trim())) { alert('CVV trebuie să aibă exact 3 cifre.'); return; }
         }
-        if(id==='formSms'){
-          if(!document.getElementById('phone').value.trim()) return alert('Introdu numărul de telefon.');
+
+        if (id === 'formSms') {
+          const digits = ($('#phone').value || '').replace(/\D/g,'');
+          if (digits.length < 10) {
+            alert('Introdu un număr valid (minim 10 cifre).');
+            return;
+          }
         }
 
         const method = id.replace('form','').toUpperCase(); // CARD / APPLE / SMS
+
+        // Păstrăm parametrii și ne asigurăm că trimitem zoneLabel către pag4
         const out = new URLSearchParams({
           method,
           zone: params.zone,
           minutes: params.minutes,
           price: params.price.toFixed(2),
           start: params.start,
-          // păstrăm textul pentru pag4
-          zoneLabel: parkText
+          zoneLabel: (params.zoneLabel || params.name || ZONE_NAMES[params.zone] || '—')
         });
+
+        if (params.name) out.set('name', params.name);
+
+        const btn = form.querySelector('button[type="submit"]');
+        if (btn) btn.disabled = true;
+
         window.location.href = `pag4.html?${out.toString()}`;
       });
     });
