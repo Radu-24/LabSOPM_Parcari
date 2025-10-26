@@ -7,10 +7,15 @@
   <link rel="stylesheet" href="stylepg2.css">
 </head>
 <body>
-  <header>
+ <header>
+  <div class="header-left">
     <h1>Detalii parcare</h1>
     <p>Zona selectată: <strong id="selectedZoneLabel">—</strong></p>
-  </header>
+  </div>
+  <div class="header-right">
+    <button id="backToMapBtn" type="button">⬅️ Înapoi la hartă</button>
+  </div>
+</header>
 
   <main>
     <section id="parking-info">
@@ -64,6 +69,10 @@
       <div>
         <button id="toPaymentBtn" type="button">Continuă la plată</button>
       </div>
+
+      <div class="back-to-map">
+  <button id="backToMapBtn" type="button">⬅️ Înapoi la hartă</button>
+</div> 
     </section>
   </main>
 
@@ -150,6 +159,11 @@
       updateCalculationUI();
     });
 
+    document.getElementById('backToMapBtn').addEventListener('click', () => {
+  window.location.href = 'index.html';
+});
+
+
     [hoursInput, minutesInput].forEach(el => el.addEventListener('input', updateCalculationUI));
 
     // === BUTON CONTINUĂ ===
@@ -194,12 +208,16 @@
         "4": "Zona 2 — Periferie"
       };
 
-      const zonePanoramas = {
-        "1": "https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE1xSmhGSWwxQ0dCQ2FzdkpXQ0ZBbF9ES3ZIM0oxMVd6ZFFzZk5C!2m2!1d45.593!2d25.547!3f0!4f0!5f0.7820865974627469",
-        "2": "https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE5xN0pSYjVFa2pPZ2l0c3ZSRU1EbkZfRjNfQ1lybE9jbUlwM!2m2!1d45.642!2d25.588!3f0!4f0!5f0.7820865974627469",
-        "3": "https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE1jTVg5d2pTdVJ4R2lwc0dqYUpCN1ZKZUlRVjZud3djd1ZyV!2m2!1d45.658!2d25.599!3f0!4f0!5f0.7820865974627469",
-        "4": "https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE1aY1JvR2FjYzZ2NVh2QlJUSW9CM1ZzV1pjQ1pQYVZPekRr!2m2!1d45.680!2d25.630!3f0!4f0!5f0.7820865974627469"
-      };
+   const zonePanoramas = {
+  "1": "https://www.google.com/maps/embed?pb=!4v1761507772501!6m8!1m7!1sPqX77EKCjUilzO8ODpbNcQ!2m2!1d45.59581823417588!2d25.55322354608915!3f217.67346640163797!4f0!5f0.7820865974627469", // Poiana Brașov - parcare telegondolă
+
+  "2": "https://www.google.com/maps/embed?pb=!4v1730000100000!6m8!1m7!1sCAoSLEFGMVFpcE5sV2RSc09hRV9MbDFPZ0YwMmh4RkIzZ0hSMEoxcFhMR3pv!2m2!1d45.6415988!2d25.5880066!3f0!4f0!5f0.7820865974627469", // Centrul Vechi - Strada Republicii
+
+  "3": "https://www.google.com/maps/embed?pb=!4v1715000000000!6m8!1m7!1sCAoSLEFGMVFpcE1jTVg5d2pTdVJ4R2lwc0dqYUpCN1ZKZUlRVjZud3djd1ZyV!2m2!1d45.658!2d25.599!3f0!4f0!5f0.7820865974627469", // Zona 1 - Perimetru (nemodificat)
+
+  "4": "https://www.google.com/maps/embed?pb=!4v1761507995572!6m8!1m7!1sr3nKL-PFtiysbYTuUaRMWw!2m2!1d45.63200144857508!2d25.63647460447647!3f137.13140929642827!4f-1.5650080516300449!5f0.7820865974627469" // Periferie - strada Zizinului
+};
+
 
       selectedZoneLabel.textContent = zoneNames[currentZone] || "Necunoscută";
       panoramaFrame.src = zonePanoramas[currentZone] || zonePanoramas["1"];

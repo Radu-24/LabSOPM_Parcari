@@ -321,3 +321,25 @@ footer {
   color: #c6d4ff;
   opacity: 0.8;
 }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8em 1.5em;
+}
+
+.header-right button {
+  background: linear-gradient(90deg, #0072ff, #00c6ff);
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.header-right button:hover {
+  opacity: 0.85;
+}
+
