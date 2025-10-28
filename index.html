@@ -56,10 +56,45 @@
     .modal-card input{ width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,.2); background:transparent; color:#fff; }
     .modal-actions{ display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
     .btn.primary{ background:#0d6efd; color:#fff; border-color:#0d6efd; }
+
+    /* === WEATHER WIDGET (nou) === */
+    .ui-top-left{ position:fixed; top:12px; left:12px; z-index:2147483647; pointer-events:none; }
+    .ui-top-left>*{ pointer-events:auto; }
+
+    .weather-card{
+      min-width: 180px;
+      max-width: 220px;
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:12px;
+      background:rgba(17,17,17,.92); color:#fff;
+      border:1px solid rgba(255,255,255,.15);
+      box-shadow:0 6px 18px rgba(0,0,0,.35);
+      font:13px/1.3 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    .weather-card.light{ background:#fff; color:#111; border-color:rgba(0,0,0,.15); }
+    .weather-icon{ width:42px; height:42px; flex:0 0 42px; }
+    .weather-main{ display:flex; flex-direction:column; }
+    .weather-title{ font-weight:700; font-size:13px; }
+    .weather-sub{ opacity:.8; font-size:12px; }
+    .weather-temp{ font-size:16px; font-weight:800; }
+    /* === END WEATHER WIDGET === */
   </style>
 </head>
 <body>
   <div id="map"></div>
+
+  <!-- === WEATHER WIDGET (nou) === -->
+  <div class="ui-top-left">
+    <div id="wxCard" class="weather-card" aria-live="polite" aria-label="Vreme Brașov">
+      <img id="wxIcon" class="weather-icon" alt="iconiță meteo" />
+      <div class="weather-main">
+        <div class="weather-title">Brașov</div>
+        <div class="weather-temp" id="wxTemp">--°C</div>
+        <div class="weather-sub" id="wxDesc">Se încarcă…</div>
+      </div>
+    </div>
+  </div>
+  <!-- === END WEATHER WIDGET (nou) === -->
 
   <div class="ui-top-right">
     <button id="themeBtn" class="fab">☀ Light</button>
@@ -327,12 +362,7 @@
         attachHover(layer, base.color || '#ffd400');
 
         const goFocus = (e)=>{
-          // FIX: dacă această zonă e deja în focus, NU mai refacem focusul
-          // și NU mai oprim propagarea -> lăsăm click-ul să ajungă la hartă
           if (focusedLayer === layer) return;
-
-          // doar la primul click (când intrăm în focus) oprim propagarea,
-          // ca să nu declanșeze și handlerul de pe hartă în același eveniment
           if (e && e.originalEvent) {
             e.originalEvent.stopPropagation?.();
             e.originalEvent.preventDefault?.();
@@ -340,7 +370,6 @@
           focusLayer(layer);
         };
 
-        // Doar 'click'/'tap' (nu mousedown)
         layer.on('click', goFocus);
         layer.on('tap', goFocus);
       });
@@ -483,6 +512,169 @@
     // ===== Semnale cerc cursor =====
     window.addEventListener('cursorRing:visible', ()=>{ allowNavigate = true; });
     window.addEventListener('cursorRing:hidden',  ()=>{ allowNavigate = false; });
+
+/* ===========================
+   WEATHER WIDGET – Google Weather API (final version)
+   =========================== */
+(function(){
+  const GOOGLE_KEY = 'AIzaSyCBCXzrQ63_qOa1og73NaU_wr9YFt2sHmg';
+  const lat = CITY_CENTER[0], lon = CITY_CENTER[1];
+
+  const card  = document.getElementById('wxCard');
+  const icon  = document.getElementById('wxIcon');  // <img>
+  const temp  = document.getElementById('wxTemp');
+  const desc  = document.getElementById('wxDesc');
+
+  function applyWxTheme(){
+    const isLight = (localStorage.getItem('pf_theme') === 'light');
+    if (isLight) card.classList.add('light'); else card.classList.remove('light');
+  }
+  applyWxTheme();
+  if (typeof themeBtn !== 'undefined' && themeBtn){
+    themeBtn.addEventListener('click', ()=> setTimeout(applyWxTheme,0), {passive:true});
+  }
+
+  function fetchWithTimeout(resource, {timeout=8000}={}){
+    const controller = new AbortController();
+    const t = setTimeout(()=>controller.abort(), timeout);
+    return fetch(resource, {signal:controller.signal}).finally(()=>clearTimeout(t));
+  }
+
+  // Icon-uri SVG simple
+  const ICONS = {
+    sun:   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24"><path fill="%23ffaa00" d="M6.76 4.84l-1.8-1.79L3.17 4.84l1.79 1.8zm10.48 14.32l1.79 1.8l1.79-1.79l-1.8-1.8zM12 4V1h-0v3zm0 19v-3h0v3zM4 12H1v0h3zm19 0h-3v0h3zM6.76 19.16l-1.8 1.79l1.79 1.79l1.8-1.79zM17.24 4.84l1.8-1.79l-1.79-1.8l-1.8 1.8zM12 6a6 6 0 1 1 0 12A6 6 0 0 1 12 6"/></svg>',
+    cloud: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24"><path fill="%2399aabb" d="M6 19a4 4 0 1 1 .9-7.9A6 6 0 0 1 18 9a5 5 0 0 1 0 10z"/></svg>',
+    rain:  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24"><path fill="%2399aabb" d="M6 17a4 4 0 1 1 .9-7.9A6 6 0 0 1 18 7a5 5 0 0 1 0 10z"/><path fill="%230077ff" d="M8 22l1-3M12 22l1-3M16 22l1-3"/></svg>'
+  };
+
+  const CODE_RO = {
+    CLEAR: 'Cer senin', PARTLY_CLOUDY: 'Parțial noros', MOSTLY_CLOUDY: 'Mai mult noros',
+    CLOUDY: 'Noros', RAIN: 'Ploaie', LIGHT_RAIN: 'Ploaie slabă', HEAVY_RAIN: 'Ploaie puternică',
+    THUNDERSTORM: 'Furtună', SNOW: 'Ninsori', FOG: 'Ceață'
+  };
+
+  const pickIcon = (codeStr='') => {
+    if (/rain|drizzle|shower/i.test(codeStr)) return ICONS.rain;
+    if (/cloud|overcast/i.test(codeStr))      return ICONS.cloud;
+    return ICONS.sun;
+  };
+
+  // ===== Extractoare =====
+  function walk(obj, cb, path=''){
+    if (!obj || typeof obj !== 'object') return;
+    for (const k of Object.keys(obj)){
+      const v = obj[k];
+      const p = path ? path + '.' + k : k;
+      cb(v, k, p);
+      if (v && typeof v === 'object') walk(v, cb, p);
+    }
+  }
+
+  function findTemperatureC(obj){
+    let best;
+    walk(obj, (v,k)=>{
+      if (!/temp/i.test(k)) return;
+      let n = (typeof v === 'number') ? v
+            : (v && typeof v === 'object' && typeof v.value === 'number') ? v.value
+            : undefined;
+      if (typeof n === 'number' && isFinite(n)){
+        if (n > -80 && n < 65) best = n;
+      }
+    });
+    return best;
+  }
+
+  function findCodeName(obj){
+    let code = '';
+    walk(obj, (v,k)=>{
+      if (/code(Name)?$/i.test(k) && typeof v === 'string' && v.length <= 40) code = v;
+    });
+    if (!code && Array.isArray(obj?.weatherCode)) code = obj.weatherCode.join(' ');
+    return code;
+  }
+
+  function findDescription(obj){
+    let text = '';
+    walk(obj, (v,k)=>{
+      if (text) return;
+      if (/(description|summary|phrase|text|weatherText)/i.test(k) && typeof v === 'string' && v.trim()){
+        text = v.trim();
+      }
+      if (!text && /weatherCondition/i.test(k) && v && typeof v === 'object'){
+        const d = v.description || v.text || v.summary;
+        if (typeof d === 'string' && d.trim()) text = d.trim();
+      }
+    });
+    return text;
+  }
+
+  async function loadWeather(){
+    const url = "https://weather.googleapis.com/v1/currentConditions:lookup"
+      + `?key=${encodeURIComponent(GOOGLE_KEY)}`
+      + `&location.latitude=${lat}`
+      + `&location.longitude=${lon}`
+      + `&unitsSystem=METRIC`
+      + `&languageCode=ro`;
+
+    try{
+      desc.textContent = 'Se încarcă…';
+      icon.src = ICONS.sun;
+
+      const res = await fetchWithTimeout(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status} – ${await res.text()}`);
+      const data = await res.json();
+      const cc = (data?.currentConditions?.[0]) || data?.currentConditions || data || {};
+
+      // === Temperatură (°C) – cu fallback-uri multiple
+      let t = findTemperatureC(cc);
+
+      if (!Number.isFinite(t)) {
+        t = findTemperatureC({
+          temperature: cc?.apparentTemperature ?? cc?.feelsLike ??
+                       cc?.airTemperature ?? cc?.surfaceTemperature ??
+                       cc?.temperature2m ?? cc?.temperatureMin ?? cc?.temperatureMax
+        });
+      }
+
+      if (!Number.isFinite(t) && Array.isArray(data?.hourlyForecasts?.forecast) && data.hourlyForecasts.forecast.length) {
+        const f0 = data.hourlyForecasts.forecast[0];
+        t = findTemperatureC(f0);
+      }
+
+      if (Number.isFinite(t) && t > 65) {
+        t = (t - 32) * 5 / 9;
+      }
+
+      temp.textContent = Number.isFinite(t) ? `${Math.round(t)}°C` : '--°C';
+
+      // === Descriere meteo
+      let code = findCodeName(cc);
+      let d = findDescription(cc);
+      if (!d && code){
+        const key = code.toUpperCase().split(/[ ,]/)[0];
+        d = CODE_RO[key] || code.replaceAll('_',' ').toLowerCase();
+      }
+      if (typeof d === 'string' && d.length) d = d[0].toUpperCase() + d.slice(1);
+      desc.textContent = d || '—';
+
+      icon.src = pickIcon(code || d || '');
+      card.title = `Ultima actualizare: ${new Date().toLocaleTimeString('ro-RO')}`;
+    }catch(err){
+      temp.textContent = '--°C';
+      desc.textContent = '—';
+      icon.src = ICONS.sun;
+      card.title = 'Eroare la încărcarea vremii';
+      console.error('Weather (Google) error:', err);
+    }
+  }
+
+  loadWeather();
+  setInterval(loadWeather, 15*60*1000);
+})();
+/* ===== END WEATHER WIDGET ===== */
+
+
+
   </script>
 
   <!-- === CURSOR RING MODULE (cu evenimente) === -->
