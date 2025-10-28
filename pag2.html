@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="stylepg2.css">
 </head>
 <body>
+  <!--Titlu-->
  <header>
   <div class="header-left">
     <h1>Detalii parcare</h1>
@@ -16,13 +17,10 @@
     <button id="backToMapBtn" type="button">  Înapoi la hartă</button>
   </div>
 </header>
-
+ <!--Dreptunghiul din stanga cu panorama-->
   <main>
     <section id="parking-info">
-      <h2 id="parkingName">Nume Parcare</h2>
-      <p id="parkingDescription">
-        Aici poți adăuga descrierea parcării (număr locuri, program, facilități, etc.).
-      </p>
+      
 
       <div id="panorama">
         <h3>Panoramă 360°</h3>
@@ -35,16 +33,16 @@
         <p class="hint">Poți roti și mări imaginea pentru a explora parcarea în 360°.</p>
       </div>
     </section>
-
+<!--Dreptunghiul din stanga-->
     <section id="booking">
       <h2>Rezervă locul</h2>
       <p>Tarif/oră: <strong id="rateLabel">—</strong> RON</p>
-
+<!--Calendar-->
       <div>
         <label for="startTime">Început (opțional)</label>
         <input id="startTime" type="datetime-local" name="startTime">
       </div>
-
+<!--Dreptunghiul mic cu ore si minute-->
       <fieldset>
         <legend>Durată</legend>
         <label for="hours">Ore</label>
@@ -52,20 +50,20 @@
 
         <label for="minutes">Minute</label>
         <input id="minutes" type="number" min="0" max="59" step="15" value="0">
-
+<!--Butoane adaugare timp-->
         <div>
           <button type="button" id="quick15">+15 min</button>
           <button type="button" id="quick30">+30 min</button>
           <button type="button" id="quick60">+1 h</button>
         </div>
       </fieldset>
-
+<!--Calcul pret-->
       <section id="calculation">
         <h3>Calcul</h3>
         <p>Durată totală: <strong id="totalMinutesLabel">—</strong> minute (<span id="totalHoursLabel">—</span> ore)</p>
         <p>Total de plată: <strong id="totalPriceLabel">—</strong> RON</p>
       </section>
-
+<!--Buton continua la plata-->
       <div>
         <button id="toPaymentBtn" type="button">Continuă la plată</button>
       </div>
@@ -74,12 +72,10 @@
     </section>
   </main>
 
-  <footer>
-    <p>ParkingApp — demo</p>
-  </footer>
+  
 
   <script>
-    // === TARIFE ===
+    // === TARIFE PENTRU FIECARE ZONĂ ===
     const RATES = {
       "1": 3.00, // Zona 0 — Poiana Brașov
       "2": 3.00, // Zona 0 — Centrul Vechi
@@ -87,9 +83,9 @@
       "4": 1.00  // Zona 2 — Periferie
     };
 
-    const MIN_MINUTES = 15;
+    const MIN_MINUTES = 15; // Durata minimă de rezervare (15 minute)
 
-    // === ELEMENTE HTML ===
+    // === REFERINȚE CĂTRE ELEMENTE HTML ===
     const selectedZoneLabel = document.getElementById('selectedZoneLabel');
     const rateLabel = document.getElementById('rateLabel');
     const hoursInput = document.getElementById('hours');
@@ -103,7 +99,7 @@
     const quick60 = document.getElementById('quick60');
     const panoramaFrame = document.getElementById('panoramaFrame');
 
-    // === FUNCȚII ===
+    // === FUNCȚIE: citește parametrii din URL ===
     function getQueryParams() {
       const params = {};
       window.location.search.replace(/^\?/, '').split('&').forEach(p => {
@@ -113,8 +109,9 @@
       return params;
     }
 
-    function formatCurrency(num) { return Number(num).toFixed(2); }
+    function formatCurrency(num) { return Number(num).toFixed(2); } //Formateaza numarul cu 2 zecimale
 
+    // === FUNCȚIE: calculează durata totală în minute ===
     function computeTotalMinutes() {
       const h = parseInt(hoursInput.value) || 0;
       const m = parseInt(minutesInput.value) || 0;
@@ -122,14 +119,14 @@
       if (total < MIN_MINUTES) total = MIN_MINUTES;
       return total;
     }
-
+ // === FUNCȚIE: actualizează interfața de calcul ===
     function updateCalculationUI() {
-      const zone = currentZone;
-      const rate = RATES[zone];
-      rateLabel.textContent = formatCurrency(rate);
-      const totalMinutes = computeTotalMinutes();
+      const zone = currentZone; 
+      const rate = RATES[zone]; //Tariful pe ora pentru zona curenta
+      rateLabel.textContent = formatCurrency(rate); //Afiseaza tariful
+      const totalMinutes = computeTotalMinutes(); //Calcul durata totala
       const totalHours = totalMinutes / 60;
-      const price = Math.round(rate * totalHours * 100) / 100;
+      const price = Math.round(rate * totalHours * 100) / 100; //Calculeaza totalul
       totalMinutesLabel.textContent = totalMinutes;
       totalHoursLabel.textContent = totalHours.toFixed(2);
       totalPriceLabel.textContent = formatCurrency(price);
@@ -156,7 +153,7 @@
       hoursInput.value = (parseInt(hoursInput.value) || 0) + 1;
       updateCalculationUI();
     });
-
+ //=== Buton "Inapoi la harta"
     document.getElementById('backToMapBtn').addEventListener('click', () => {
   window.location.href = 'index.html';
 });
@@ -164,7 +161,7 @@
 
     [hoursInput, minutesInput].forEach(el => el.addEventListener('input', updateCalculationUI));
 
-    // === BUTON CONTINUĂ ===
+    // === Buton "Contiuna la plata" ===
     toPaymentBtn.addEventListener('click', () => {
       const zone = currentZone;
       const totalMinutes = computeTotalMinutes();
@@ -194,7 +191,7 @@
       }
     })();
 
-    // === INIȚIALIZARE ===
+    // === INIȚIALIZARE PAGINA ===
     function init() {
       const params = getQueryParams();
       currentZone = params.zoneId || sessionStorage.getItem('pf_zoneId') || "1";
@@ -206,6 +203,8 @@
         "4": "Zona 2 — Periferie"
       };
 
+      //=== Link-ul catre panorame pentru fiecare zona
+
    const zonePanoramas = {
   "1": "https://www.google.com/maps/embed?pb=!4v1761507772501!6m8!1m7!1sPqX77EKCjUilzO8ODpbNcQ!2m2!1d45.59581823417588!2d25.55322354608915!3f217.67346640163797!4f0!5f0.7820865974627469", // Poiana Brașov - parcare telegondolă
 
@@ -215,18 +214,18 @@
 
   "4": "https://www.google.com/maps/embed?pb=!4v1761507995572!6m8!1m7!1sr3nKL-PFtiysbYTuUaRMWw!2m2!1d45.63200144857508!2d25.63647460447647!3f137.13140929642827!4f-1.5650080516300449!5f0.7820865974627469" // Periferie - strada Zizinului
 };
-
+// Actualizează informațiile din interfață
 
       selectedZoneLabel.textContent = zoneNames[currentZone] || "Necunoscută";
       panoramaFrame.src = zonePanoramas[currentZone] || zonePanoramas["1"];
-
+// Dacă există parametru „name” în URL, se actualizează numele parcării
       if (params.name) {
         document.getElementById('parkingName').textContent = decodeURIComponent(params.name);
       }
-
+// Actualizeaza calculul afisat
       updateCalculationUI();
     }
-
+// Porneste
     init();
   </script>
 </body>

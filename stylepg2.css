@@ -1,4 +1,5 @@
 /* === RESET === */
+/* Elimină marginile și padding-urile implicite și setează o bază uniformă pentru tot site-ul */
 * {
   margin: 0;
   padding: 0;
@@ -6,6 +7,7 @@
   font-family: "SF Pro Display", "Segoe UI", Roboto, sans-serif;
 }
 
+/* Stil general pentru întreaga pagină */
 html, body {
   height: 100%;
   background: radial-gradient(circle at top left, #0c0f18 0%, #12141c 35%, #0a0c10 100%);
@@ -17,21 +19,23 @@ html, body {
 header {
   text-align: center;
   padding: 2rem 1rem;
-  background: rgba(30, 30, 40, 0.65);
+  background: rgba(30, 30, 40, 0.65); /* fundal translucid */
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   border-bottom: 1px solid rgba(255,255,255,0.1);
-  position: sticky;
+  position: sticky; /* rămâne sus la scroll */
   top: 0;
   z-index: 5;
 }
 
+/* Titlul principal din header */
 header h1 {
   font-size: 2rem;
   font-weight: 600;
   color: #fff;
 }
 
+/* Subtitlul din header */
 header p {
   color: #c6d4ff;
   font-size: 1.05rem;
@@ -40,13 +44,14 @@ header p {
 /* === MAIN CONTAINER === */
 main {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr; /* 2 coloane */
   gap: 2rem;
   max-width: 1100px;
   margin: 2.5rem auto;
   padding: 2rem;
 }
 
+/* Fiecare secțiune principală */
 section {
   background: rgba(40, 45, 55, 0.45);
   backdrop-filter: blur(25px);
@@ -58,6 +63,7 @@ section {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Efect la hover */
 section:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(0,0,0,0.55);
@@ -69,22 +75,9 @@ h2, h3 {
   text-shadow: 0 2px 10px rgba(0,0,0,0.6);
 }
 
-/* === GALERIE === */
-#gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  margin-top: 1rem;
-}
 
-#gallery img {
-  border-radius: 14px;
-  width: calc(50% - 0.5rem);
-  object-fit: cover;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
 
+/* Zoom la hover */
 #gallery img:hover {
   transform: scale(1.05);
   box-shadow: 0 8px 30px rgba(0,0,0,0.6);
@@ -98,6 +91,7 @@ label {
   color: #cfd8ff;
 }
 
+/* Câmpuri numerice și de dată */
 input[type="number"],
 input[type="datetime-local"] {
   padding: 0.6rem 0.8rem;
@@ -110,6 +104,7 @@ input[type="datetime-local"] {
   transition: all 0.3s ease;
 }
 
+/* Efect când e focusat */
 input:focus {
   outline: none;
   background: rgba(255,255,255,0.15);
@@ -125,6 +120,7 @@ fieldset {
   margin-top: 1rem;
 }
 
+/* Titlu pentru fieldset */
 legend {
   font-weight: 600;
   color: #9ecbff;
@@ -139,17 +135,18 @@ button {
   color: #fff;
   background: linear-gradient(135deg, rgba(0,140,255,0.7), rgba(0,220,255,0.5));
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
   transition: all 0.25s ease;
 }
 
+/* Hover pe buton */
 button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(0,180,255,0.4);
   background: linear-gradient(135deg, rgba(0,160,255,0.8), rgba(0,255,255,0.6));
 }
 
+/* Click pe buton */
 button:active {
   transform: translateY(1px) scale(0.98);
 }
@@ -189,6 +186,7 @@ footer {
 }
 
 /* === RESPONSIV === */
+/* Layout pe un singur rând sub 900px */
 @media (max-width: 900px) {
   main {
     grid-template-columns: 1fr;
@@ -203,89 +201,24 @@ footer {
   gap: 2rem;
 }
 
-/* Panorama */
-#panoramaViewer {
-  overflow: hidden;
-  width: 100%;
-  height: 300px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: #000;
-  position: relative;
-  cursor: grab;
-}
 
-#panoramaViewer img {
-  width: 200%;
-  height: 100%;
-  object-fit: cover;
-  user-select: none;
-  pointer-events: none;
-  transform: translateX(0);
-  transition: transform 0.1s linear;
-}
 
 #panoramaViewer:active {
   cursor: grabbing;
 }
 
+/* Text hint */
 .hint {
   font-size: 0.9rem;
   color: #9ecbff;
   margin-top: 0.4rem;
 }
 
-/* Programare viitoare */
-#futureBooking {
-  background: rgba(255,255,255,0.05);
-  border-radius: 14px;
-  padding: 1rem;
-}
 
-#savedBookings {
-  margin-top: 1rem;
-  font-size: 0.95rem;
-  color: #cfd8ff;
-}
 
-#savedBookings div {
-  padding: 0.5rem;
-  margin-top: 0.4rem;
-  border-left: 3px solid #00c0ff;
-  background: rgba(255,255,255,0.05);
-  border-radius: 8px;
-}
 
-/* Abonamente */
-.subscription-options {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
-}
 
-.subscription-card {
-  background: rgba(255,255,255,0.08);
-  padding: 1rem 1.2rem;
-  border-radius: 16px;
-  flex: 1;
-  min-width: 220px;
-  text-align: center;
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  transition: transform 0.25s ease;
-}
 
-.subscription-card:hover {
-  transform: translateY(-4px);
-}
-
-#activeSubscription {
-  margin-top: 1rem;
-  font-size: 1rem;
-  color: #9effc4;
-  font-weight: 600;
-}
 
 /* === PANORAMĂ 360 === */
 #panorama {
@@ -321,6 +254,8 @@ footer {
   color: #c6d4ff;
   opacity: 0.8;
 }
+
+/* === HEADER MODERN === */
 header {
   display: flex;
   justify-content: space-between;
@@ -328,18 +263,8 @@ header {
   padding: 0.8em 1.5em;
 }
 
-.header-right button {
-  background: linear-gradient(90deg, #0072ff, #00c6ff);
-  border: none;
-  color: white;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
 
 .header-right button:hover {
   opacity: 0.85;
 }
-
+;
