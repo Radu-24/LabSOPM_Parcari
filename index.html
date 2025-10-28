@@ -5,15 +5,23 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Parking Finder – Brașov</title>
 
+  <!-- ==============================
+       LEAFLET CSS (MAP + DRAW)
+       ============================== -->
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <!-- Leaflet.draw -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
 
+  <!-- ==============================
+       APP STYLES (LAYOUT + THEME + UI)
+       ============================== -->
   <style>
+    /* ====== PAGE + MAP CANVAS ====== */
     html, body, #map { height: 100%; margin: 0; }
     #map { position: relative; z-index: 0; }
 
+    /* ====== FLOATING UI CONTAINERS ====== */
     .ui-top-right{ position: fixed; top:12px; right:12px; display:flex; flex-direction:column; gap:10px; z-index:2147483647; pointer-events:none; }
     .ui-top-right>*{ pointer-events:auto; }
 
@@ -23,6 +31,7 @@
     .ui-bottom-right{ position: fixed; right:12px; bottom:16px; display:flex; flex-direction:column; gap:10px; z-index:2147483647; pointer-events:none; }
     .ui-bottom-right>*{ pointer-events:auto; }
 
+    /* ====== BUTTONS (FAB / ADMIN / BACK) ====== */
     .fab{ padding:12px 18px; border-radius:999px; border:0; background:#111; color:#fff; font:600 15px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; box-shadow:0 6px 18px rgba(0,0,0,.3); cursor:pointer; user-select:none; opacity:.95; transition:opacity .2s; }
     .fab:hover{ opacity:1; }
     .fab.light{ background:#fff; color:#111; }
@@ -31,12 +40,12 @@
     .back-btn{ padding:10px 16px; border-radius:999px; border:0; background:#222; color:#fff; font:600 14px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; box-shadow:0 6px 18px rgba(0,0,0,.35); cursor:pointer; user-select:none; opacity:.96; display:none; }
     .back-btn.light{ background:#fff; color:#111; }
 
+    /* ====== MAP ATTRIBUTION + TILE FX ====== */
     .leaflet-control-attribution{ font-size:10px !important; opacity:.65; bottom:4px !important; right:4px !important; left:auto !important; pointer-events:none !important; }
-
     .night-soft-tiles{ filter: invert(85%) sepia(10%) saturate(115%) hue-rotate(190deg) brightness(88%) contrast(96%); }
-
     .leaflet-overlay-pane .zone-outline{ filter: drop-shadow(0 0 2px rgba(0,0,0,.35)); }
 
+    /* ====== ADMIN PANEL (SIDECARD) ====== */
     .admin-panel{ position: fixed; right:12px; bottom:68px; width:min(520px,92vw); max-height:60vh; overflow:auto; background:rgba(17,17,17,.96); color:#fff; border:1px solid rgba(255,255,255,.15); border-radius:12px; padding:12px; box-shadow:0 10px 24px rgba(0,0,0,.4); z-index:2147483000; display:none; font:13px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
     .admin-panel.light{ background:#fff; color:#111; border-color:rgba(0,0,0,.15); }
     .row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -49,6 +58,7 @@
     .admin-panel.light select,.admin-panel.light input{ border-color:rgba(0,0,0,.2); }
     .draw-on{ background:#198754 !important; border-color:#198754 !important; color:#fff !important; }
 
+    /* ====== MODAL (PASSWORD PROMPT) ====== */
     .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:2147483500; display:none; }
     .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:2147483600; }
     .modal-card{ width:min(360px,92vw); background:#111; color:#fff; border-radius:12px; padding:16px; box-shadow:0 10px 24px rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.15); font:14px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
@@ -81,9 +91,14 @@
   </style>
 </head>
 <body>
+  <!-- ==============================
+       MAP CONTAINER
+       ============================== -->
   <div id="map"></div>
 
-  <!-- === WEATHER WIDGET (nou) === -->
+  <!-- ==============================
+       WEATHER WIDGET (TOP-LEFT)
+       ============================== -->
   <div class="ui-top-left">
     <div id="wxCard" class="weather-card" aria-live="polite" aria-label="Vreme Brașov">
       <img id="wxIcon" class="weather-icon" alt="iconiță meteo" />
@@ -96,18 +111,30 @@
   </div>
   <!-- === END WEATHER WIDGET (nou) === -->
 
+  <!-- ==============================
+       THEME TOGGLE (TOP-RIGHT)
+       ============================== -->
   <div class="ui-top-right">
     <button id="themeBtn" class="fab">☀ Light</button>
   </div>
 
+  <!-- ==============================
+       BACK BUTTON (TOP-CENTER)
+       ============================== -->
   <div class="ui-top-center">
     <button id="backBtn" class="back-btn">⟵ Back to City</button>
   </div>
 
+  <!-- ==============================
+       ADMIN BUTTON (BOTTOM-RIGHT)
+       ============================== -->
   <div class="ui-bottom-right">
     <button id="adminBtn" class="admin-btn">Admin</button>
   </div>
 
+  <!-- ==============================
+       ADMIN PANEL (SIDEBAR)
+       ============================== -->
   <div id="adminPanel" class="admin-panel" aria-hidden="true">
     <div class="row" style="justify-content:space-between;">
       <strong>Admin – edit zones</strong>
@@ -125,6 +152,9 @@
     </div>
   </div>
 
+  <!-- ==============================
+       PASSWORD MODAL (ADMIN ACCESS)
+       ============================== -->
   <div id="modalBackdrop" class="modal-backdrop"></div>
   <div id="passModal" class="modal" aria-hidden="true">
     <div class="modal-card">
@@ -137,9 +167,15 @@
     </div>
   </div>
 
+  <!-- ==============================
+       LEAFLET JS (MAP + DRAW)
+       ============================== -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
+  <!-- ==============================
+       APP CORE SCRIPT
+       ============================== -->
   <script>
     // ===== View constants =====
     const CITY_CENTER = [45.643, 25.588];
@@ -213,17 +249,18 @@
     };
     const outlines = new Map();
 
-    // Editor state
+    // ===== Editor state (Leaflet.draw) =====
     const drawnItems = new L.FeatureGroup().addTo(map);
     let drawControl=null, zoomCtrl=null, inDrawMode=false;
 
-    // Focus / navigate state
+    // ===== Focus / navigate state =====
     let hoverEnabled = true;
     let focusedLayer = null;
     let mapClickHandler = null;
     let suppressNextMapClick = false;
     let allowNavigate = false;
 
+    // ===== Map interaction toggles =====
     function enableFreeMap(){
       map.dragging.enable(); map.scrollWheelZoom.enable(); map.doubleClickZoom.enable();
       map.boxZoom.enable(); map.keyboard.enable(); map.touchZoom.enable();
@@ -237,6 +274,7 @@
       if (zoomCtrl){ map.removeControl(zoomCtrl); zoomCtrl=null; }
     }
 
+    // ===== Geometry util: point in polygon =====
     function pointInPolygon(latlng, polyLatLngs) {
       const rings = Array.isArray(polyLatLngs[0]) ? polyLatLngs : [polyLatLngs];
       const x = latlng.lng, y = latlng.lat;
@@ -255,6 +293,7 @@
       return false;
     }
 
+    // ===== Reset to home view =====
     function goHome(){
       hoverEnabled = true;
       backBtn.style.display = 'none';
@@ -281,6 +320,7 @@
       map.once('moveend', ()=>setTimeout(()=>map.invalidateSize(true), 0));
     }
 
+    // ===== Hover styling for zones =====
     function attachHover(layer, baseColor){
       layer.on('mouseover', () => {
         if (!hoverEnabled) return;
@@ -293,17 +333,19 @@
       });
     }
 
-    // CLICK pe poligon -> focus + zoom + cerc; navigarea e pe click-ul următor (map)
+    // ===== Focus a zone (zoom + ring + navigation arming) =====
     function focusLayer(layer){
       if (inDrawMode) return;
       hoverEnabled = false;
       backBtn.style.display = 'inline-block';
 
+      // reset all styles
       outlines.forEach((l, t) => {
         const base = styleMap[t] || { color:'#ffd400', weight:4, opacity:0.95, fill:true, fillOpacity:0.001 };
         l.setStyle({ color: base.color, weight: base.weight, opacity: base.opacity, fill:true, fillColor: base.color, fillOpacity: 0.001 });
       });
 
+      // zoom to bounds (locked zoom at target)
       try {
         layer.bringToFront();
 
@@ -322,16 +364,19 @@
         if (zoomCtrl){ map.removeControl(zoomCtrl); zoomCtrl=null; }
       } catch(e){}
 
+      // reflow fixes
       map.invalidateSize(true);
       requestAnimationFrame(()=>map.invalidateSize(true));
       setTimeout(()=>map.invalidateSize(true), 0);
 
+      // show cursor ring logic
       if (typeof enableCursorRing === 'function') enableCursorRing(layer);
 
       focusedLayer = layer;
-      allowNavigate = false;       // va deveni true când cercul e vizibil
-      suppressNextMapClick = true; // ignorăm click-ul curent care a produs focusul
+      allowNavigate = false;       // devine true când ring-ul e vizibil
+      suppressNextMapClick = true; // ignorăm click-ul care a produs focusul
 
+      // armăm click pe hartă pentru intrare în pagina zonei
       if (mapClickHandler) { map.off('click', mapClickHandler); mapClickHandler = null; }
       mapClickHandler = function(e){
         if (suppressNextMapClick) { suppressNextMapClick = false; return; }
@@ -351,6 +396,7 @@
       map.on('click', mapClickHandler);
     }
 
+    // ===== Build / rebuild zone layers =====
     function buildZones(){
       outlines.forEach(l=>map.removeLayer(l)); outlines.clear();
       ZONES.forEach(z=>{
@@ -376,7 +422,7 @@
     }
     buildZones();
 
-    // ===== Admin =====
+    // ===== Admin (open/close + auth) =====
     const adminBtn = document.getElementById('adminBtn');
     const closeAdmin = document.getElementById('closeAdmin');
     const adminPanelEl = document.getElementById('adminPanel');
@@ -424,6 +470,7 @@
     const saveBtn    = document.getElementById('saveBtn');
     const clearBtn   = document.getElementById('clearBtn');
 
+    // --- Populate zone dropdown
     function loadAreaOptions(){
       areaSelect.innerHTML='';
       ZONES.forEach(z=>{
@@ -434,12 +481,14 @@
     }
     loadAreaOptions();
 
+    // --- Extract polygon coords from layer
     function coordsFromLayer(layer){
       const rings = layer.getLatLngs();
       const outer = Array.isArray(rings[0]) ? rings[0] : rings;
       return outer.map(p=>[Number(p.lat.toFixed(6)), Number(p.lng.toFixed(6))]);
     }
 
+    // --- Load selected zone into editor
     function loadAreaToEditor(title){
       drawnItems.clearLayers();
       const z = ZONES.find(x=>x.title===title);
@@ -453,6 +502,7 @@
       }
     }
 
+    // --- Save editor polygon back to zone
     function saveEditorToZone(){
       const title = areaSelect.value;
       let coords = null;
@@ -464,6 +514,7 @@
       loadAreaToEditor(title);
     }
 
+    // --- Clear coords for current zone
     function clearZone(){
       const title = areaSelect.value;
       const hit = ZONES.find(z=>z.title===title);
@@ -472,6 +523,7 @@
       buildZones();
     }
 
+    // --- Toggle draw mode
     function toggleDraw(){
       if (!inDrawMode){
         inDrawMode = true;
@@ -499,6 +551,7 @@
       }
     }
 
+    // --- Admin editor event wiring
     drawToggle.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); toggleDraw(); });
     saveBtn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); saveEditorToZone(); });
     clearBtn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); if(confirm('Clear polygon for this zone?')) clearZone(); });
@@ -507,9 +560,10 @@
     map.on(L.Draw.Event.CREATED, (e)=>{ drawnItems.clearLayers(); drawnItems.addLayer(e.layer); });
     map.on(L.Draw.Event.EDITED, (e)=>{ /* live */ });
 
+    // ===== Resize handling =====
     window.addEventListener('resize', ()=>map.invalidateSize());
 
-    // ===== Semnale cerc cursor =====
+    // ===== Cursor ring visibility sync -> navigation arming =====
     window.addEventListener('cursorRing:visible', ()=>{ allowNavigate = true; });
     window.addEventListener('cursorRing:hidden',  ()=>{ allowNavigate = false; });
 
@@ -679,6 +733,9 @@
 
   <!-- === CURSOR RING MODULE (cu evenimente) === -->
   <script>
+  /* ==============================
+     CURSOR RING MODULE (visual cue inside polygons)
+     ============================== */
   (function () {
     const RING_RADIUS_PX = 28;
     const RING_STYLE = {
@@ -697,10 +754,12 @@
     let _map = null;
     let ringVisible = false;
 
+    // --- Dispatch custom visibility events (used to arm navigation) ---
     function dispatch(name){
       window.dispatchEvent(new CustomEvent('cursorRing:' + name));
     }
 
+    // --- Lazy create ring layer ---
     function ensureRing(mapInstance) {
       if (ring) return ring;
       ring = L.circleMarker([0, 0], { radius: RING_RADIUS_PX, ...RING_STYLE });
@@ -709,6 +768,7 @@
       return ring;
     }
 
+    // --- Show/hide ring ---
     function showRingAt(latlng) {
       if (!ring) return;
       ring.setLatLng(latlng);
@@ -722,6 +782,7 @@
       if (ringVisible){ ringVisible = false; dispatch('hidden'); }
     }
 
+    // --- Geometry util (duplicate by design: isolated module) ---
     function pointInPolygon(latlng, polyLatLngs) {
       const rings = Array.isArray(polyLatLngs[0]) ? polyLatLngs : [polyLatLngs];
       const x = latlng.lng, y = latlng.lat;
@@ -740,6 +801,7 @@
       return false;
     }
 
+    // --- Public API: enable/disable ring on a given polygon ---
     window.enableCursorRing = function (polygon) {
       try {
         _map = (typeof window !== 'undefined' && window.map) ? window.map : _map;

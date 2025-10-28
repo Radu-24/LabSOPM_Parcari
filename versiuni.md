@@ -23,3 +23,5 @@ V.4.2.2 - Fuctionare buton " Inapoi la harta"
 V.4.2.3 - Stergere abonament parcare 
 
 V.4.3.0 - Selectare zone + generare id pentru autocompletare pag2
+
+V.4.3.1 - NERVI
